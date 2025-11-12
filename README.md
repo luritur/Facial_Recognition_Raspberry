@@ -6,6 +6,8 @@
 
 # link: https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalcatface.xml
 
+# link: https://github.com/austinjoyal/haar-cascade-files
+
 #   2.Reconocimiento facial: comparar la cara con las registradas 
 #       2.1: Extraer features/atributos de la cara
 #       2.2: Medir distancia de cada atributo de la cara respecto a ese atributo de todas las caras guardadas
