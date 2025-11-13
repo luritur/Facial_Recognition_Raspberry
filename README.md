@@ -1,10 +1,15 @@
+
+
+# link: https://gist.githz  ub.com/QurratulWidiana/29cf390403567aeb9297d6b15e5ef947
+# link: https://docs.opencv.org/4.x/
+
 # Facial_Recognition_Raspberry
 
 # doc: https://www.raspberrypi.com/documentation/computers/camera_software.html
 
 # guide: camera usb: https://raspberrypi-guide.github.io/electronics/using-usb-webcams
 
-# link: Haar cascade opencv: https://pyimagesearch.com/2021/04/12/opencv-haar-cascades/
+# link: configure Haar cascade opencv: https://pyimagesearch.com/2021/04/12/opencv-haar-cascades/
 
 # Pasos: 
 #   1.Deteccion facial 
