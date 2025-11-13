@@ -13,7 +13,8 @@
 #       2.2: Medir distancia de cada atributo de la cara respecto a ese atributo de todas las caras guardadas
 
 
-# link: https://gist.github.com/QurratulWidiana/29cf390403567aeb9297d6b15e5ef947
+# link: https://gist.githz  ub.com/QurratulWidiana/29cf390403567aeb9297d6b15e5ef947
+# link: https://docs.opencv.org/4.x/
 
 
 #       2.3: Probar threshold para encontrar el threshold adecuado
