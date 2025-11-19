@@ -50,7 +50,7 @@
 # HACER UN "mini csv o bd"
 
 #   1.Si pulsas 1 vez: foto de tu cara y se guarda en carpeta de caras registradas
-#   2.Si mantienes boton se INICIA el proceso de los hilos
+#   2.Si pulsas otro boton se INICIA el proceso de los hilos
 #       2.1 OJO CAMARA: 15-30 frames por segundo y LIMITAR a 10 segundos MAX (ir viendo estos valores para optimizar)
 
 #       2.2 SI pulsas PAUSA DE EMERGENCIA
