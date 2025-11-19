@@ -1,23 +1,3 @@
-#import cv2
-#
-#cap = cv2.VideoCapture(0)  # Abre la cámara
-
-#while True:
-#    ret, frame = cap.read()
-#    if not ret:
-#        print("No se pudo leer el frame.")
-#        break
-
-#   cv2.imshow("Cámara", frame)  # Muestra el frame en una ventana llamada "Cámara" (camara/ventana)
-
-    # Espera 1 ms y revisa si se presionó la tecla ESC (código 27)
-#    if cv2.waitKey(x) & 0xFF == 27:    x=tiempo de cada frame (1000/60)
-#        break
-
-#cap.release()
-#cv2.destroyAllWindows()
-
-
 from gpiozero import Button, LED
 import threading
 import queue
@@ -37,26 +17,49 @@ led = LED(LED_PIN)
 registered_dni_csv = pd.read_csv("registeredDNI.csv")
 
 
- 
-#Si se pulsa el BTN_REGISTRAR, se hace una foto 
-def btn_registrar():
-    BTN_REGISTRAR.when_pressed = registrar.registrar_foto(registered_dni_csv)
+# Cola de eventos (OJO EL MAXSIZE)
+frames = queue.Queue(maxsize=100)
+
+# Flag para evitar que se ejecuten varias cosas a la vez
+en_ejecucion = False
+
+def ejecutar_registro():
+    global en_ejecucion #global para poder cambiarlo para todo el main.py, no solo para esta función
+    if en_ejecucion:
+        print("Ya hay una acción en ejecución.")
+        return
+    #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
+    en_ejecucion = True
+    print("=== REGISTRANDO TRABAJADOR ===")
+    registrar.registrar_foto(registered_dni_csv)
+    en_ejecucion = False
+    print("=== REGISTRO COMPLETADO ===")
 
 
-def btn_run():
-    BTN_RUN.when_pressed = run.run()
+def ejecutar_run():
+    global en_ejecucion #global para poder cambiarlo para todo el main.py, no solo para esta función
+    if en_ejecucion:
+        print("Ya hay una acción en ejecución.")
+        return
+    #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (registro) SI INTENTAMOS HACERLO
+    en_ejecucion = True
+    print("=== INICIANDO RUN (10 segundos) ===")
+    # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
+    run.run(frames, 10, False) #True o False es para abrir una ventana para los FRAMES
+    en_ejecucion = False
+    print("=== RUN COMPLETADO ===")
 
-# Cola de eventos
+
+# Asignar callbacks simples y SIN HILOS
+BTN_REGISTRAR.when_pressed = ejecutar_registro
+BTN_RUN.when_pressed = ejecutar_run
 
 
-while True: 
-    if(BTN_REGISTRAR.is_pressed):
-        registrar.registrar_foto(registered_dni_csv)
-    if(BTN_RUN.is_pressed):
-        run.run()
-    if(keyboard.read_key()=="space"):
+# Loop principal — NO hay hilos aquí
+while True:
+    if keyboard.is_pressed("space"):
         break
-
+    time.sleep(0.05)
 
 """"
 try:
