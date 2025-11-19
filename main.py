@@ -22,6 +22,7 @@ from gpiozero import Button, LED
 import threading
 import queue
 import time
+import run
 
 # Pines BCM
 LED_PIN = 17
@@ -37,11 +38,7 @@ def registrar_foto():
 #Si se pulsa el BTN_REGISTRAR, se hace una foto 
 BTN_REGISTRAR.when_pressed = registrar_foto()
 
-def run():
-    frames = queue.Queue()
-    index = 0  # posición actual en la lista
 
-    print("run")
 
 BTN_RUN.when_pressed = run()
 
