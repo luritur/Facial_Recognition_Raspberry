@@ -23,6 +23,7 @@ import threading
 import queue
 import time
 import run
+import registrar
 
 # Pines BCM
 LED_PIN = 17
@@ -32,15 +33,14 @@ BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
 led = LED(LED_PIN)
 
 
-def registrar_foto():
-    print("Foto registrada")
+
 
 #Si se pulsa el BTN_REGISTRAR, se hace una foto 
-BTN_REGISTRAR.when_pressed = registrar_foto()
+BTN_REGISTRAR.when_pressed = registrar.registrar_foto()
 
 
 
-BTN_RUN.when_pressed = run()
+BTN_RUN.when_pressed = run.run()
 
 # Cola de eventos
 
