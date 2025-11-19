@@ -24,35 +24,41 @@ import queue
 import time
 import run
 import registrar
+import csv
+import pandas as pd
+import keyboard
 
 # Pines BCM
 LED_PIN = 17
 BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
 BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
-
 led = LED(LED_PIN)
 
+registered_dni_csv = pd.read_csv("registeredDNI.csv")
 
 
-
+ 
 #Si se pulsa el BTN_REGISTRAR, se hace una foto 
-BTN_REGISTRAR.when_pressed = registrar.registrar_foto()
+def btn_registrar():
+    BTN_REGISTRAR.when_pressed = registrar.registrar_foto(registered_dni_csv)
 
 
-
-BTN_RUN.when_pressed = run.run()
+def btn_run():
+    BTN_RUN.when_pressed = run.run()
 
 # Cola de eventos
 
 
-# Lanzar hilos
-#t_registrar = threading.Thread(target=watch_button, args=(BTN_UP, "UP"), daemon=True)
-#t_run = threading.Thread(target=watch_button, args=(BTN_DOWN, "DOWN"), daemon=True)
-#t_up.start(); t_down.start(); t_led.start()
+while True: 
+    if(BTN_REGISTRAR.is_pressed):
+        registrar.registrar_foto(registered_dni_csv)
+    if(BTN_RUN.is_pressed):
+        run.run()
+    if(keyboard.read_key()=="space"):
+        break
 
-print("Control de parpadeo del LED con dos pulsadores")
-print("BTN1 (GPIO23): aumentar frecuencia | BTN2 (GPIO24): disminuir frecuencia")
 
+""""
 try:
     while True:
         evt = events.get()
@@ -64,3 +70,4 @@ try:
 except KeyboardInterrupt:
     print("\nSaliendo...")
     led.off()
+"""
