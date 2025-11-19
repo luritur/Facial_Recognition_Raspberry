@@ -16,3 +16,54 @@
 
 #cap.release()
 #cv2.destroyAllWindows()
+
+
+from gpiozero import Button, LED
+import threading
+import queue
+import time
+
+# Pines BCM
+LED_PIN = 17
+BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
+BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
+
+led = LED(LED_PIN)
+
+
+def registrar_foto():
+    print("Foto registrada")
+
+#Si se pulsa el BTN_REGISTRAR, se hace una foto 
+BTN_REGISTRAR.when_pressed = registrar_foto()
+
+def run():
+    frames = queue.Queue()
+    index = 0  # posición actual en la lista
+
+    print("run")
+
+BTN_RUN.when_pressed = run()
+
+# Cola de eventos
+
+
+# Lanzar hilos
+#t_registrar = threading.Thread(target=watch_button, args=(BTN_UP, "UP"), daemon=True)
+#t_run = threading.Thread(target=watch_button, args=(BTN_DOWN, "DOWN"), daemon=True)
+#t_up.start(); t_down.start(); t_led.start()
+
+print("Control de parpadeo del LED con dos pulsadores")
+print("BTN1 (GPIO23): aumentar frecuencia | BTN2 (GPIO24): disminuir frecuencia")
+
+try:
+    while True:
+        evt = events.get()
+        if evt == "UP":
+            index = min(index + 1, len(freqs) - 1)
+        elif evt == "DOWN":
+            index = max(index - 1, 0)
+        print(f"Frecuencia actual: {freqs[index]} Hz")
+except KeyboardInterrupt:
+    print("\nSaliendo...")
+    led.off()
