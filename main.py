@@ -118,7 +118,7 @@ def ejecutar_registro():
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
-    registrar.registrar_foto(registered_dni_csv)
+    registrar_foto(registered_dni_csv)
     en_ejecucion = False
     print("=== REGISTRO COMPLETADO ===")
 
@@ -132,7 +132,7 @@ def ejecutar_run():
     en_ejecucion = True
     print("=== INICIANDO RUN (10 segundos) ===")
     # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
-    run.run(frames, 10) #True o False es para abrir una ventana para los FRAMES
+    run(frames, 10) #True o False es para abrir una ventana para los FRAMES
     en_ejecucion = False
     print("=== RUN COMPLETADO ===")
 
