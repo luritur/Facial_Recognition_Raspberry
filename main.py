@@ -61,9 +61,14 @@ def camara_run(frames, duracion, show=True, camera_index=0):  #FALTA DECIDIR Y P
 
 def detection_run():
     print("uenos dias")
+    frame = frames.get()
+    #aqui hacer la deteccion con haar cascade
+
+
 
 def recognition_run():
     print("uenos tardes")
+    #aqui hacer eigenfaces recognition
 
 def run(frames, duracion):
     t_camera = threading.Thread(target=camara_run, args=(frames, duracion), daemon=True)
@@ -78,7 +83,7 @@ def registrar_foto(dfRegisteredWorkers):
     #devolvemos True si se ha registrado correctamente
     #devolvemos False si no se ha registrado (porque ha habido un Error o porque ya estaba registrado)
 
-    cap = cv2.VideoCapture(i) #guarda en cap 
+    cap = cv2.VideoCapture(camIndex) #guarda en cap 
     ret, photo = cap.read()
 
     if (ret==False):
