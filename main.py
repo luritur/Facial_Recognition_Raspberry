@@ -5,7 +5,7 @@ import queue
 import time
 import csv
 import pandas as pd
-import keyboard
+#import keyboard
 
 # Pines BCM
 LED_PIN = 17
@@ -93,20 +93,19 @@ def registrar_foto(dfRegisteredWorkers):
     
     cv2.imshow("Para guardar esta foto pulsa ENTER", photo)
 
-    while(True):
-        if (keyboard.read_key()=="enter"): 
-            dni = input()
-            if (dni not in dfRegisteredWorkers["DNI"].values):
-                cv2.imwrite(f"/RegisteredPhotos/{dni}",photo)
-                dfRegisteredWorkers.loc[len(dfRegisteredWorkers)] = [dni]
-                dfRegisteredWorkers.to_csv("registeredDNI.csv", index=False)
-                print(f"Trabajador {dni} registrado")
-                cap.release()
-                return True 
-            else: #si ya esta registrado
-                print("El trabajador ya está registrado")
-                cap.release()
-                return False 
+    # if (keyboard.read_key()=="enter"): 
+    dni = input()
+    if (dni not in dfRegisteredWorkers["DNI"].values):
+        cv2.imwrite(f"/RegisteredPhotos/{dni}",photo)
+        dfRegisteredWorkers.loc[len(dfRegisteredWorkers)] = [dni]
+        dfRegisteredWorkers.to_csv("registeredDNI.csv", index=False)
+        print(f"Trabajador {dni} registrado")
+        cap.release()
+        return True 
+    else: #si ya esta registrado
+        print("El trabajador ya está registrado")
+        cap.release()
+        return False 
 
             
 
