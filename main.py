@@ -147,11 +147,12 @@ BTN_RUN.when_pressed = ejecutar_run
 
 
 # Loop principal — NO hay hilos aquí
+"""
 while True:
     if keyboard.is_pressed("space"):
         break
     time.sleep(0.05)
-
+"""
 """"
 try:
     while True:
