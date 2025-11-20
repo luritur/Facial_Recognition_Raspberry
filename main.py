@@ -3,8 +3,6 @@ from gpiozero import Button, LED
 import threading
 import queue
 import time
-import run
-import registrar
 import csv
 import pandas as pd
 import keyboard
