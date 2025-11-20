@@ -32,7 +32,7 @@ frames = queue.Queue(maxsize=100)
 detected = queue.Queue()
 
 
-def camara_run(frames, duracion, show=True, camera_index=0):
+def camara_run(frames, duracion, show=True, camera_index=0):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")

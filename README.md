@@ -10,6 +10,7 @@
 # guide: camera usb: https://raspberrypi-guide.github.io/electronics/using-usb-webcams
 
 # link: configure Haar cascade opencv: https://pyimagesearch.com/2021/04/12/opencv-haar-cascades/
+# link: EigenFaces recognition: https://pyimagesearch.com/2021/05/10/opencv-eigenfaces-for-face-recognition/#pyis-cta-modal
 
 # Pasos: 
 #   1.Deteccion facial 
