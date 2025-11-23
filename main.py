@@ -5,6 +5,7 @@ import queue
 import time
 import csv
 import pandas as pd
+import os
 #import keyboard
 
 # Pines BCM
@@ -13,7 +14,8 @@ BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
 BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
 led = LED(LED_PIN)
 camIndex = 0
-registered_dni_csv = pd.read_csv("registeredDNI.csv")
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+registered_dni_csv = pd.read_csv(os.path.join(BASE_PATH, "registeredDNI.csv"))
 
 for i in range(2):
     cap = cv2.VideoCapture(i)
