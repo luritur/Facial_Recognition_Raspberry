@@ -34,12 +34,13 @@ frames = queue.Queue(maxsize=100)
 detected = queue.Queue()
 
 
-def camara_run(frames, duracion, show=True, camera_index=0):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion, show, camera_index):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
     inicio = time.time()
     frames_put=0
+    frame_guardado = False   # Para guardar solo un frame
 
     while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
         ret, frame = cap.read()
@@ -54,11 +55,21 @@ def camara_run(frames, duracion, show=True, camera_index=0):  #FALTA DECIDIR Y P
             cv2.imshow("Cámara", frame)
             if cv2.waitKey(1) & 0xFF == 27:  # ESC para salir
                 break
-
+        else:
+            if not frame_guardado:
+                ruta = "/home/pi/frame_test.jpg"
+                cv2.imwrite(ruta, frame)
+                print(f"Frame guardado en: {ruta}")
+                frame_guardado = True
     cap.release()
     if show:
         cv2.destroyAllWindows()
     print(f"run.py: captura finalizada. Frames encolados: {frames_put}")
+
+def test_camara():
+    print("=== TEST DE CÁMARA ===")
+    camara_run(frames=queue.Queue(), duracion=5, show=False, camera_index=camIndex)
+    print("=== FIN DEL TEST ===")
 
 
 def detection_run():
@@ -93,7 +104,7 @@ def registrar_foto(dfRegisteredWorkers):
         cap.release()
         return False
     
-    cv2.imshow("Para guardar esta foto pulsa ENTER", photo)
+    #cv2.imshow("Para guardar esta foto pulsa ENTER", photo)
 
     # if (keyboard.read_key()=="enter"): 
     dni = input()
@@ -146,7 +157,7 @@ def ejecutar_run():
 # Asignar callbacks simples y SIN HILOS
 BTN_REGISTRAR.when_pressed = ejecutar_registro
 BTN_RUN.when_pressed = ejecutar_run
-
+test_camara()
 
 # Loop principal — NO hay hilos aquí
 """
