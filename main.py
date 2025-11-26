@@ -7,6 +7,7 @@ import time
 import csv
 import pandas as pd
 import os
+import shutil
 #import keyboard
 
 # Pines BCM
@@ -35,14 +36,17 @@ frames = queue.Queue(maxsize=100)
 detected = queue.Queue()
 
 
-def camara_run(frames, duracion, camera_index=camIndex):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def borrar_contenido_carpeta(ruta):
+    # Borra todo el contenido de la carpeta, incluyendo subcarpetas y archivos
+    for nombre in os.listdir(ruta):
+        path = os.path.join(ruta, nombre)
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+
+def camara_run(frames, duracion, camera_index=camIndex, path):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
-    
-    #borrar ruta
-    ruta = "/home/pi/Facial_Recognition_Raspberry/frames/"
-    files = glob.glob(os.path.join(ruta, "*"))
-    for f in files:
-        os.remove(f)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
     inicio = time.time()
@@ -57,11 +61,12 @@ def camara_run(frames, duracion, camera_index=camIndex):  #FALTA DECIDIR Y PROGR
         frames.put(frame)
         frames_put+=1
 
-        ruta = f"/home/pi/Facial_Recognition_Raspberry/frames/frame_test{frames_put}.jpg"
+        ruta = f"{path}/frame{frames_put}.jpg"
         cv2.imwrite(ruta, frame)
         print(f"Frame guardado en: {ruta}")
     cap.release()
-    print(f"run.py: captura finalizada. Frames encolados: {frames_put}")
+
+    borrar_contenido_carpeta("/home/pi/Facial_Recognition_Raspberry/frames/")
 
 def test_camara():
     print("=== TEST DE CÁMARA ===")
@@ -80,8 +85,8 @@ def recognition_run():
     print("uenos tardes")
     #aqui hacer eigenfaces recognition
 
-def run(frames, duracion):
-    t_camera = threading.Thread(target=camara_run, args=(frames, duracion), daemon=True)
+def run(frames, duracion, path):
+    t_camera = threading.Thread(target=camara_run, args=(frames, duracion, path), daemon=True)
     t_detect = threading.Thread(target=detection_run, args=(), daemon=True)
     t_recognition = threading.Thread(target=recognition_run, args=(), daemon=True)
 
@@ -132,7 +137,9 @@ def ejecutar_registro():
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
-    registrar_foto(registered_dni_csv)
+    path =f"/home/pi/Facial_Recognition_Raspberry/registro/"
+
+    run(frames, 3, path)
     en_ejecucion = False
     print("=== REGISTRO COMPLETADO ===")
 
@@ -146,7 +153,8 @@ def ejecutar_run():
     en_ejecucion = True
     print("=== INICIANDO RUN (10 segundos) ===")
     # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
-    run(frames, 10) #HILOS
+    path =f"/home/pi/Facial_Recognition_Raspberry/frames/"
+    run(frames, 10, path)
     #test_camara()
     en_ejecucion = False
     print("=== RUN COMPLETADO ===")
