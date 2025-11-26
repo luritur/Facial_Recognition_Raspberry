@@ -34,7 +34,7 @@ frames = queue.Queue(maxsize=100)
 detected = queue.Queue()
 
 
-def camara_run(frames, duracion, camera_index):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion, camera_index=camIndex):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
@@ -139,7 +139,8 @@ def ejecutar_run():
     en_ejecucion = True
     print("=== INICIANDO RUN (10 segundos) ===")
     # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
-    run(frames, 10) #True o False es para abrir una ventana para los FRAMES
+    run(frames, 10) #HILOS
+    #test_camara()
     en_ejecucion = False
     print("=== RUN COMPLETADO ===")
 
@@ -147,7 +148,13 @@ def ejecutar_run():
 # Asignar callbacks simples y SIN HILOS
 BTN_REGISTRAR.when_pressed = ejecutar_registro
 BTN_RUN.when_pressed = ejecutar_run
-test_camara()
+# ...existing code...
+try:
+    while True:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print("Saliendo...")
+    led.off()
 
 # Loop principal — NO hay hilos aquí
 """
