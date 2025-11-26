@@ -59,3 +59,5 @@
 #       2.4 Si pasa el tiempo y se RECONOCE: se guarda el "TIMESTAMP" de entrada/salida dependiendo de lo que sea en la BD
 
 # SI DA TIEMPO: IMPLEMENTAR PARTE VISUAL(WEB)/ALTAVOZ
+
+
