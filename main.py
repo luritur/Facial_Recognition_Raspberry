@@ -34,7 +34,7 @@ frames = queue.Queue(maxsize=100)
 detected = queue.Queue()
 
 
-def camara_run(frames, duracion, show, camera_index):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion, camera_index):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
@@ -50,25 +50,15 @@ def camara_run(frames, duracion, show, camera_index):  #FALTA DECIDIR Y PROGRAMA
         frames.put(frame)
         frames_put+=1
 
-        # Mostrar frame opcional (chateada)
-        if show:
-            cv2.imshow("Cámara", frame)
-            if cv2.waitKey(1) & 0xFF == 27:  # ESC para salir
-                break
-        else:
-            if not frame_guardado:
-                ruta = "/home/pi/frame_test.jpg"
-                cv2.imwrite(ruta, frame)
-                print(f"Frame guardado en: {ruta}")
-                frame_guardado = True
+        ruta = f"/home/pi/Facial_Recognition_Raspberry/frames/frame_test{frames_put}.jpg"
+        cv2.imwrite(ruta, frame)
+        print(f"Frame guardado en: {ruta}")
     cap.release()
-    if show:
-        cv2.destroyAllWindows()
     print(f"run.py: captura finalizada. Frames encolados: {frames_put}")
 
 def test_camara():
     print("=== TEST DE CÁMARA ===")
-    camara_run(frames=queue.Queue(), duracion=5, show=False, camera_index=camIndex)
+    camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex)
     print("=== FIN DEL TEST ===")
 
 
