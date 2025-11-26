@@ -45,7 +45,7 @@ def borrar_contenido_carpeta(ruta):
         elif os.path.isdir(path):
             shutil.rmtree(path)
 
-def camara_run(frames, duracion, camera_index=camIndex, path):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion,path, camera_index=camIndex):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
@@ -67,12 +67,12 @@ def camara_run(frames, duracion, camera_index=camIndex, path):  #FALTA DECIDIR Y
     cap.release()
 
     borrar_contenido_carpeta("/home/pi/Facial_Recognition_Raspberry/frames/")
-
+"""
 def test_camara():
     print("=== TEST DE CÁMARA ===")
-    camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex)
+    camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex,)
     print("=== FIN DEL TEST ===")
-
+"""
 
 def detection_run():
     print("uenos dias")
