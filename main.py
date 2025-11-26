@@ -1,3 +1,4 @@
+import glob
 import cv2
 from gpiozero import Button, LED
 import threading
@@ -36,6 +37,12 @@ detected = queue.Queue()
 
 def camara_run(frames, duracion, camera_index=camIndex):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = cv2.VideoCapture(camera_index)  # Abre la cámara (ojo con el 0)
+    
+    #borrar ruta
+    ruta = "/home/pi/Facial_Recognition_Raspberry/frames/"
+    files = glob.glob(os.path.join(ruta, "*"))
+    for f in files:
+        os.remove(f)
 
     print(f"run.py: captura iniciada durante {duracion} segundos")
     inicio = time.time()
