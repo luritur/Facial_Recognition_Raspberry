@@ -2,12 +2,13 @@ import glob
 import cv2
 from gpiozero import Button, LED
 import threading
-import queue
 import time
 import csv
 import pandas as pd
 import os
 import shutil
+import detection as detect
+import queue 
 #import keyboard
 
 # Pines BCM
@@ -19,6 +20,9 @@ camIndex = 0
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 registered_dni_csv = pd.read_csv(os.path.join(BASE_PATH, "registeredDNI.csv"))
 
+frames = queue.frames
+
+
 for i in range(2):
     cap = cv2.VideoCapture(i)
     if cap.isOpened():
@@ -27,13 +31,6 @@ for i in range(2):
         #break
     else: 
         print(f"Camara {i} NO DISPONIBLE")
-
-
-# Cola de eventos (OJO EL MAXSIZE)
-frames = queue.Queue(maxsize=100)
-
-# Cola para reconocer imagenes detectadas
-detected = queue.Queue()
 
 
 def borrar_contenido_carpeta(ruta):
@@ -60,9 +57,10 @@ def camara_run(frames, duracion,path, camera_index=camIndex):  #FALTA DECIDIR Y 
             print("No se pudo leer el frame.")
             break
         frames.put(frame)
-        
-        if("frames" in path):#lanzamos hilo de detectr
-            run_detect()
+
+        if("frames" in path):#lanzamos hilo de detectar
+            detect.run_detect()
+            print("detectando........")
 
         frames_put+=1
 
@@ -79,11 +77,6 @@ def test_camara():
     camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex,)
     print("=== FIN DEL TEST ===")
 """
-
-def detection_run():
-    print("uenos dias")
-    frame = frames.get()
-    #aqui hacer la deteccion con haar cascade
 
 
 

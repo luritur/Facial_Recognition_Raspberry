@@ -61,3 +61,10 @@
 # SI DA TIEMPO: IMPLEMENTAR PARTE VISUAL(WEB)/ALTAVOZ
 
 
+
+
+# DETECTAR CON TECNICAS ACTUALES: mediaPipe: 
+- # https://mediapipe.readthedocs.io/en/latest/getting_started/python.html?utm_source=chatgpt.com
+- # https://mediapipe.readthedocs.io/en/latest/solutions/face_detection.html
+
+# RECONOCIMIENTO CON TECNICAS ACTUALES: LBPH
