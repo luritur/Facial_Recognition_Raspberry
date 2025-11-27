@@ -8,7 +8,7 @@ import pandas as pd
 import os
 import shutil
 import detection as detect
-import queue 
+import queue_class as queue
 #import keyboard
 
 # Pines BCM
@@ -50,6 +50,9 @@ def camara_run(frames, duracion,path, camera_index=camIndex):  #FALTA DECIDIR Y 
     inicio = time.time()
     frames_put=0
     #frame_guardado = False   # Para guardar solo un frame
+    if("frames" in path):#lanzamos hilo de detectar
+        run_detect()
+        print("detectando........")
 
     while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
         ret, frame = cap.read()
@@ -58,9 +61,6 @@ def camara_run(frames, duracion,path, camera_index=camIndex):  #FALTA DECIDIR Y 
             break
         frames.put(frame)
 
-        if("frames" in path):#lanzamos hilo de detectar
-            detect.run_detect()
-            print("detectando........")
 
         frames_put+=1
 
@@ -84,12 +84,9 @@ def recognition_run():
     print("uenos tardes")
     #aqui hacer eigenfaces recognition
 
-def run_recognition():
-    t_recognition = threading.Thread(target=recognition_run, args=(), daemon=True)
-    t_recognition.start()
 
 def run_detect():
-    t_detect = threading.Thread(target=detection_run, args=(), daemon=True)
+    t_detect = threading.Thread(target=detect.detection_run, args=(), daemon=True)
     t_detect.start()
 
 def run_camera(frames, duracion, path):
