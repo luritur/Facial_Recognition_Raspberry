@@ -149,7 +149,7 @@ def ejecutar_registro():
     print("=== REGISTRANDO TRABAJADOR ===")
     path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 
-    run(frames, 3, path)
+    run_camera(frames, 3, path)
     en_ejecucion = False
     print("=== REGISTRO COMPLETADO ===")
 
@@ -164,7 +164,7 @@ def ejecutar_run():
     print("=== INICIANDO RUN (10 segundos) ===")
     # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
     path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
-    run(frames, 10, path)
+    run_camera(frames, 10, path)
     #test_camara()
     en_ejecucion = False
     print("=== RUN COMPLETADO ===")
