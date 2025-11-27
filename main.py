@@ -1,12 +1,9 @@
-import glob
 import cv2
 from gpiozero import Button, LED
 import threading
 import time
-import csv
 import pandas as pd
 import os
-import shutil
 
 
 import show
@@ -64,14 +61,6 @@ def test_camara():
     camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex,)
     print("=== FIN DEL TEST ===")
 """
-
-
- 
-
-
-
-
-            
 
 
 # Flag para evitar que se ejecuten varias cosas a la vez
