@@ -60,6 +60,7 @@ def camara_run(frames, duracion,path, camera_index=camIndex):  #FALTA DECIDIR Y 
             print("No se pudo leer el frame.")
             break
         frames.put(frame)
+        
         if("frames" in path):#lanzamos hilo de detectr
             run_detect()
 
@@ -102,35 +103,6 @@ def run_camera(frames, duracion, path):
     t_camera = threading.Thread(target=camara_run, args=(frames, duracion, path), daemon=True)
     t_camera.start(); 
 
-
-
-def registrar_foto(dfRegisteredWorkers):
-    #devolvemos True si se ha registrado correctamente
-    #devolvemos False si no se ha registrado (porque ha habido un Error o porque ya estaba registrado)
-
-    cap = cv2.VideoCapture(camIndex) #guarda en cap 
-    ret, photo = cap.read()
-
-    if (ret==False):
-        print ("Error al leer frame")
-        cap.release()
-        return False
-    
-    #cv2.imshow("Para guardar esta foto pulsa ENTER", photo)
-
-    # if (keyboard.read_key()=="enter"): 
-    dni = input()
-    if (dni not in dfRegisteredWorkers["DNI"].values):
-        cv2.imwrite(f"/RegisteredPhotos/{dni}",photo)
-        dfRegisteredWorkers.loc[len(dfRegisteredWorkers)] = [dni]
-        dfRegisteredWorkers.to_csv("registeredDNI.csv", index=False)
-        print(f"Trabajador {dni} registrado")
-        cap.release()
-        return True 
-    else: #si ya esta registrado
-        print("El trabajador ya está registrado")
-        cap.release()
-        return False 
 
             
 
@@ -181,23 +153,3 @@ except KeyboardInterrupt:
     print("Saliendo...")
     led.off()
 
-# Loop principal — NO hay hilos aquí
-"""
-while True:
-    if keyboard.is_pressed("space"):
-        break
-    time.sleep(0.05)
-"""
-""""
-try:
-    while True:
-        evt = events.get()
-        if evt == "UP":
-            index = min(index + 1, len(freqs) - 1)
-        elif evt == "DOWN":
-            index = max(index - 1, 0)
-        print(f"Frecuencia actual: {freqs[index]} Hz")
-except KeyboardInterrupt:
-    print("\nSaliendo...")
-    led.off()
-"""
