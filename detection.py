@@ -1,16 +1,20 @@
 import mediapipe as mp
 import queue_class as queue
 import cv2
+import os
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 frames = queue.frames
 
+#OJOJO VER REALMENTE CUALES SON LAS DIMENSIONES
+IMAGE_WIDTH = 720
+IMAGE_HEIGHT = 360
 
 
 def detection_run():
     print("detectando en detection_run....")
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
-        while(True):
+        while(True): 
             frame = frames.get()
 
             # To improve performance, optionally mark the image as not writeable to
@@ -25,7 +29,11 @@ def detection_run():
             if results.detections: #en results se guarda una lista de caras detectadas
                 print("CARA DETECTADA !!!!!!!")
                 for detection in results.detections:
-                    queue.detected.put(frame) #pasamos frame a la cola para reconocer 
+                    bbox = detection.location_data.relative_bounding_box
+                    x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
+                    face_crop = frame[y:y+h, x:x+w]
+                    face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
+                    queue.detected.put(face_gray) #pasamos frame a la cola para reconocer 
                     mp_drawing.draw_detection(frame, detection) #modifica el frame y le pone un rectangulo 
                     queue.show_queue.put(frame)
                     
@@ -34,6 +42,44 @@ def detection_run():
                 queue.show_queue.put(frame)
 
 
+
+### para entrenar el LBPH
+def namesToDictionary(path):
+    names_labels = {}
+    for file_name in os.listdir(path):
+        if file_name.endswith('.jpg'):
+            name = file_name.split["_"][0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg
+            last_label = int(file_name.split["_"][1].split["."][0])
+            names_labels[name]=last_label+1
+
+
+def frame_detection(path, names_labels):
+    faces = []
+    labels = []
+
+    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
+        for file in os.listdir(path):
+            if file.endswith('.jpg'):
+                image = cv2.imread(os.path.join('Faces', file))
+                name = file.split["_"][0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg, maria_2.jpg.....
+
+                image.flags.writeable = False
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                results = face_detection.process(image)
+           
+                if results.detections: #en results se guarda una lista de caras detectadas
+                    print("train detection: cara detectada")
+                    for detection in results.detections: #obtenemos la region de la cara ya que lbph trabaja con eso
+                        bbox = detection.location_data.relative_bounding_box
+                        x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
+                        face_crop = image[y:y+h, x:x+w]
+                        face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
+                        faces.append(face_gray)
+                        labels.append(names_labels[name])
+           
+                else: 
+                    print("train detection: caras NO detectada")
+    return faces, labels
 
 
 

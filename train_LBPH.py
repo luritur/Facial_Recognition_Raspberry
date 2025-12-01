@@ -1,0 +1,29 @@
+    #1.recorrer la carpeta de caras registradas: 
+    #   - En una lista guardar el "label" == el nombre del fichero (el nombre del usuario)
+    #       -->OJOJO para los labels hay que hacer un diccionario "Nombre":numero
+    #   - En otra lista detectar la cara con detection.py + pasarla a gray + guardarla en una lista de imagenes
+
+    #2. entrenar con caras y labels
+    #3. guardar el modelo entrenado como un fichero .xml
+import cv2
+import numpy as np
+import detection
+
+
+def trainLBPH(names_labels):
+    faces = []
+    labels = []
+
+    faces, labels = detection.frame_detection('path_prueba', names_labels) 
+
+    # Train the face recognition model using the faces and labels
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer.train(faces, np.array(labels))
+
+    # Save the trained model to a file
+    recognizer.save('trained_model.xml')
+    return recognizer
+
+
+    
+
