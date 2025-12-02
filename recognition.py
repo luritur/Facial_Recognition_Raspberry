@@ -7,14 +7,34 @@ import queue_class as queue
 
 frames = queue.detected
 
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+recognizer.read("trained_model.xml")
 
-
-def recognition_run():
+def recognition_run(label): #OJOJO como hacer para cerrar el bucle
+    label_name = {value: key for key, value in label.items()} #OJOO repasar esto
     print("reconociendo")
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
     while(True):
         #coger el frame de la cola frames 
         #reconocer el frame 
+        frame = frames.get()
+
+        # Recognize and label the faces
+        for (x, y, w, h) in frame:
+            # Recognize the face using the trained model
+            label, confidence = recognizer.predict(frame[y:y + h, x:x + w])
+            #print(confidence)
+            if confidence > 50:
+                # Display the recognized label and confidence level
+                cv2.putText(frame, label_name[label], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    
+                # Draw a rectangle around the face
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            else:
+                print('Unrecognized')
+
+        # Display the frame with face recognition
+        cv2.imshow('Recognize Faces', frame)
+
 
 
 

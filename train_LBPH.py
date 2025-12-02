@@ -10,6 +10,7 @@ import numpy as np
 import detection
 
 
+
 def trainLBPH(names_labels):
     faces = []
     labels = []
@@ -20,9 +21,12 @@ def trainLBPH(names_labels):
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.train(faces, np.array(labels))
 
+
+
     # Save the trained model to a file
     recognizer.save('trained_model.xml')
     return recognizer
+
 
 
     
