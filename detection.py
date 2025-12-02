@@ -53,7 +53,7 @@ def namesToDictionary(path):
             names_labels[name]=last_label+1
 
 
-def frame_detection(path, names_labels):
+def frame_detection(path, names_labels): #usado para el train
     faces = []
     labels = []
 
