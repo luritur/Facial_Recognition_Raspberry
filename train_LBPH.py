@@ -15,7 +15,7 @@ def trainLBPH(path):
     labels = []
 
     names_labels = detection.namesToDictionary(path)
-    faces, labels = detection.frame_detection('path_prueba', names_labels) 
+    faces, labels = detection.frame_detection(path, names_labels) 
 
     # Train the face recognition model using the faces and labels
     recognizer = cv2.face.LBPHFaceRecognizer_create()
