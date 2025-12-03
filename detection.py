@@ -61,7 +61,7 @@ def frame_detection(path, names_labels): #usado para el train
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
         for file in os.listdir(path):
             if file.endswith('.jpg'):
-                image = cv2.imread(os.path.join('Faces', file)) # OJOOJOJ
+                image = cv2.imread(os.path.join(path, file)) # OJOOJOJ
                 name = file.split["_"][0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg, maria_2.jpg.....
 
                 image.flags.writeable = False
