@@ -46,8 +46,8 @@ for i in range(2):
 
 
 
-def run_camera(frames, duracion, path):
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex), daemon=True)
+def run_camera(frames, duracion, path, name):
+    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex, name), daemon=True)
     t_camera.start()
 
 def run_detect_thread():
