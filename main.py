@@ -85,7 +85,7 @@ def ejecutar_registro():
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
 
-    run_camera(frames, 3, PATH_REGISTER)
+    run_camera(frames, 3, PATH_REGISTER, "Lur")#registramos el usuario Lur de prueba
     print("=== REGISTRO COMPLETADO ===")
     xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
     recognizer = cv2.face.LBPHFaceRecognizer_create()
