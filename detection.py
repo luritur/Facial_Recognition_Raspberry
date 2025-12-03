@@ -53,7 +53,7 @@ def namesToDictionary(path):
             name = file_name.split(".")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro.jpg
             print("name:"+name)
             names_labels[name]=contador 
-            print("label:"+contador)
+            print(f"label:{contador}")
 
             contador +=1
     return names_labels
@@ -86,6 +86,20 @@ def frame_detection(path, names_labels): #usado para el train
                 else: 
                     print("train detection: caras NO detectada")
     return faces, labels
+
+def boolean_face_detection(image): 
+    res = False
+    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+
+        image.flags.writeable = False
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = face_detection.process(image)
+           
+        if results.detections: #en results se guarda una lista de caras detectadas
+            res = True
+        else: 
+            print("train detection: caras NO detectada")
+    return res
 
 
 
