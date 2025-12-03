@@ -48,7 +48,7 @@ def namesToDictionary(path):
     names_labels = {}
     for file_name in os.listdir(path):
         if file_name.endswith('.jpg'):
-            name = file_name.split["_"][0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg
+            name = file_name.split("_")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg
             last_label = int(file_name.split["_"][1].split["."][0])
             names_labels[name]=last_label+1
     return names_labels
@@ -62,7 +62,7 @@ def frame_detection(path, names_labels): #usado para el train
         for file in os.listdir(path):
             if file.endswith('.jpg'):
                 image = cv2.imread(os.path.join(path, file)) # OJOOJOJ
-                name = file.split["_"][0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg, maria_2.jpg.....
+                name = file.split("_")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg, maria_2.jpg.....
 
                 image.flags.writeable = False
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
