@@ -25,20 +25,23 @@ def camara_run(frames, duracion,path, camera_index):  #FALTA DECIDIR Y PROGRAMAR
     #frame_guardado = False   # Para guardar solo un frame
     if("frames" in path):#lanzamos hilo de detectar
         print("detectando........")
-
+    if (path.contains("register")):
+        ret, frame = cap.read()
+        ruta = f"{path}registro{frames_put}.jpg"
+        cv2.imwrite(ruta, frame)
+        print(f"Usuario registrado en: {ruta}")
+        cap.release()
+        return 
     while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
         ret, frame = cap.read()
         if not ret:
             print("No se pudo leer el frame.")
             break
         frames.put(frame)
-
-
         frames_put+=1
 
-        ruta = f"{path}frame_{frames_put}.jpg"
+        ruta = f"{path}frame{frames_put}.jpg"
         cv2.imwrite(ruta, frame)
         print(f"Frame guardado en: {ruta}")
-
 
     cap.release()
