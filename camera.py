@@ -36,7 +36,7 @@ def camara_run(frames, duracion,path, camera_index):  #FALTA DECIDIR Y PROGRAMAR
 
         frames_put+=1
 
-        ruta = f"{path}frame{frames_put}.jpg"
+        ruta = f"{path}frame_{frames_put}.jpg"
         cv2.imwrite(ruta, frame)
         print(f"Frame guardado en: {ruta}")
 
