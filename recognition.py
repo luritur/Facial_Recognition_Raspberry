@@ -4,14 +4,13 @@ import cv2
 import os
 import numpy as np
 import queue_class as queue
+import detection 
 
 frames = queue.detected
 
-recognizer = cv2.face.LBPHFaceRecognizer_create()
-recognizer.read("trained_model.xml")
 
-def recognition_run(label): #OJOJO como hacer para cerrar el bucle
-    label_name = {value: key for key, value in label.items()} #OJOO repasar esto
+def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el bucle
+    label_name = {value: key for key, value in label.items()} #invertir el diccionario
     print("reconociendo")
     while(True):
         #coger el frame de la cola frames 

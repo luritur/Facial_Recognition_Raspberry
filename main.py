@@ -14,6 +14,7 @@ import detection
 import recognition
 import camera
 import queue_class as queue 
+import train_LBPH as train
 
 # Pines BCM
 LED_PIN = 17
@@ -23,6 +24,11 @@ led = LED(LED_PIN)
 camIndex = 0
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 registered_dni_csv = pd.read_csv(os.path.join(BASE_PATH, "registeredDNI.csv"))
+
+PATH_REGISTER= "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
+
+recognizer = None
+names_labels = None
 
 frames = queue.frames
 
@@ -47,8 +53,9 @@ def run_detect_thread():
     t_detect = threading.Thread(target=detection.detection_run, args=(), daemon=True)
     t_detect.start()
 
-def run_recognition_thread():
-    t_recognition = threading.Thread(target=recognition.recognition_run, args=(), daemon=True)
+
+def run_recognition_thread(recognizer, names_labels):
+    t_recognition = threading.Thread(target=recognition.recognition_run, args=(recognizer, names_labels), daemon=True)
     t_recognition.start()
 
 def run_show_video(): 
@@ -68,7 +75,8 @@ en_ejecucion = False
 
 
 def ejecutar_registro():
-    global en_ejecucion #global para poder cambiarlo para todo el main.py, no solo para esta función
+    global en_ejecucion, recognizer, names_labels  # Importante: actualizar las variables globales
+
     if en_ejecucion:
         print("Ya hay una acción en ejecución.")
         return
@@ -78,15 +86,29 @@ def ejecutar_registro():
     path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 
     run_camera(frames, 3, path)
-    en_ejecucion = False
     print("=== REGISTRO COMPLETADO ===")
+    xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer.read(xml)
+    names_labels = detection.namesToDictionary(PATH_REGISTER)
+
+    en_ejecucion = False
+
+
+
+
 
 
 def ejecutar_run():
-    global en_ejecucion #global para poder cambiarlo para todo el main.py, no solo para esta función
+    global en_ejecucion, recognizer, names_labels
     if en_ejecucion:
         print("Ya hay una acción en ejecución.")
         return
+    
+    if recognizer is None or names_labels is None:
+        print("Modelo no cargado. Registra al menos una persona primero.")
+        return
+    
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (registro) SI INTENTAMOS HACERLO
     en_ejecucion = True
     print("=== INICIANDO RUN (10 segundos) ===")
@@ -94,7 +116,7 @@ def ejecutar_run():
     path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
     run_camera(frames, 10, path)
     run_detect_thread()
-    run_recognition_thread()
+    run_recognition_thread(recognizer, names_labels)
     run_show_video() 
 
     #test_camara()

@@ -10,11 +10,11 @@ import numpy as np
 import detection
 
 
-
-def trainLBPH(names_labels):
+def trainLBPH(path):
     faces = []
     labels = []
 
+    names_labels = detection.namesToDictionary(path)
     faces, labels = detection.frame_detection('path_prueba', names_labels) 
 
     # Train the face recognition model using the faces and labels
