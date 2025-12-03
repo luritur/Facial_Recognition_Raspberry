@@ -26,6 +26,7 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 registered_dni_csv = pd.read_csv(os.path.join(BASE_PATH, "registeredDNI.csv"))
 
 PATH_REGISTER= "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
+PATH_IMAGENES =f"/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
 
 recognizer = None
 names_labels = None
@@ -83,9 +84,8 @@ def ejecutar_registro():
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
-    path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 
-    run_camera(frames, 3, path)
+    run_camera(frames, 3, PATH_REGISTER)
     print("=== REGISTRO COMPLETADO ===")
     xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
     recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -113,8 +113,7 @@ def ejecutar_run():
     en_ejecucion = True
     print("=== INICIANDO RUN (10 segundos) ===")
     # Este RUN internamente crea 2 o 3 hilos (captura/detección/reconocimiento)
-    path =f"/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
-    run_camera(frames, 10, path)
+    run_camera(frames, 10, PATH_IMAGENES)
     run_detect_thread()
     run_recognition_thread(recognizer, names_labels)
     run_show_video() 
