@@ -30,7 +30,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
         # Crear carpeta de la persona
         carpeta_persona = os.path.join(path, nombre_persona)
         os.makedirs(carpeta_persona, exist_ok=True)
-
+        minimo_una_cara_detectada = None
         while time.time() - inicio < duracion:
             ret, frame = cap.read()
             if not ret:
@@ -41,22 +41,23 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                 cv2.imwrite(ruta, frame)
                 print(f"Foto registrada en: {ruta}")
                 frames_put += 1
+                minimo_una_cara_detectada = True
 
-        cap.release()
-        print(f"Registro completado para {nombre_persona}")
-        return
-    
-    while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
-        ret, frame = cap.read()
-        if not ret:
-            print("No se pudo leer el frame.")
-            break
-        frames.put(frame)
+        if(minimo_una_cara_detectada):
+            print(f"Registro completado para {nombre_persona}")
+        else: 
+            print(f"No se ha detectado ninguna cara {nombre_persona}")
 
-        ruta = f"{path}frame{frames_put}.jpg"
-        cv2.imwrite(ruta, frame)
-        print(f"Frame guardado en: {ruta}")
-        frames_put+=1
+    else: 
+        while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
+            ret, frame = cap.read()
+            if not ret:
+                print("No se pudo leer el frame.")
+                break
+            frames.put(frame)
 
-
+            ruta = f"{path}frame{frames_put}.jpg"
+            cv2.imwrite(ruta, frame)
+            print(f"Frame guardado en: {ruta}")
+            frames_put+=1
     cap.release()
