@@ -49,7 +49,7 @@ def namesToDictionary(path):
     for file_name in os.listdir(path):
         if file_name.endswith('.jpg'):
             name = file_name.split("_")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg
-            last_label = int(file_name.split["_"][1].split["."][0])
+            last_label = int(file_name.split("_")[1].split(".")[0])
             names_labels[name]=last_label+1
     return names_labels
 
