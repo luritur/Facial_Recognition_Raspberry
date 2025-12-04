@@ -18,18 +18,18 @@ def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el 
         frame = frames.get()
 
         # Recognize and label the faces
-        for (x, y, w, h) in frame:
             # Recognize the face using the trained model
-            label, confidence = recognizer.predict(frame[y:y + h, x:x + w])
+        label, confidence = recognizer.predict(frame)
             #print(confidence)
-            if confidence > 50:
-                # Display the recognized label and confidence level
-                cv2.putText(frame, label_name[label], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+        if confidence > 50:
+            # Display the recognized label and confidence level
+            #cv2.putText(frame, label_name[label], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
     
-                # Draw a rectangle around the face
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            else:
-                print('Unrecognized')
+            # Draw a rectangle around the face
+            #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            print(f"Se ha reconocido al usuario: {label_name[label]}")
+        else:
+            print('No se ha reconocido al usuario')
 
         # Display the frame with face recognition
         cv2.imshow('Recognize Faces', frame)
