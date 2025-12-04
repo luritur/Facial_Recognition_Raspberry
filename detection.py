@@ -75,7 +75,9 @@ def frame_detection(path, names_labels): #usado para el train
             full_path = os.path.join(path, item)
             person_name = item
             if os.path.isdir(full_path):
-                for file in os.listdir(path):
+                lista_frames_persona = []
+
+                for file in os.listdir(full_path):
                     if file.endswith('.jpg'):
                         image = cv2.imread(os.path.join(full_path, file)) # OJOOJOJ
 
@@ -83,7 +85,6 @@ def frame_detection(path, names_labels): #usado para el train
                         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                         results = face_detection.process(image)
 
-                        lista_frames_persona = []
                         if results.detections: #en results se guarda una lista de caras detectadas
                             print("train detection: cara detectada")
                             for detection in results.detections: #obtenemos la region de la cara ya que lbph trabaja con eso
