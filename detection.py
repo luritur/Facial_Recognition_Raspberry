@@ -75,7 +75,6 @@ def frame_detection(path, names_labels): #usado para el train
             full_path = os.path.join(path, item)
             person_name = item
             if os.path.isdir(full_path):
-                lista_frames_persona = []
 
                 for file in os.listdir(full_path):
                     if file.endswith('.jpg'):
@@ -93,12 +92,11 @@ def frame_detection(path, names_labels): #usado para el train
                                 face_crop = image[y:y+h, x:x+w]
                                 face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
 
-                                lista_frames_persona.append(face_gray)
-                
+                                faces.append(face_gray)
+                                labels.append(names_labels[person_name])
+
                         else: 
                             print("train detection: caras NO detectada")
-                labels.append(names_labels[person_name])
-                faces.append(lista_frames_persona)
 
     return faces, labels
 
