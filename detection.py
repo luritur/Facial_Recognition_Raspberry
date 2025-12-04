@@ -77,8 +77,7 @@ def frame_detection(path, names_labels): #usado para el train
             if os.path.isdir(full_path):
                 for file in os.listdir(path):
                     if file.endswith('.jpg'):
-                        image = cv2.imread(os.path.join(path, file)) # OJOOJOJ
-                        name = file.split(".")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo frame1.jpg, frame2.jpg.....
+                        image = cv2.imread(os.path.join(full_path, file)) # OJOOJOJ
 
                         image.flags.writeable = False
                         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
