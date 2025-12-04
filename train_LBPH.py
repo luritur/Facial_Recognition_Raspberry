@@ -24,8 +24,8 @@ def trainLBPH(path):
 
 
     # Save the trained model to a file
-    recognizer.save('trained_model.xml')
-    return recognizer
+    recognizer.save('/home/pi/Facial_Recognition_Raspberry/trained_model.xml')
+    return '/home/pi/Facial_Recognition_Raspberry/trained_model.xml'
 
 
 
