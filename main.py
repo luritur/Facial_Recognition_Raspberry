@@ -46,9 +46,10 @@ for i in range(2):
 
 
 
-def run_camera(frames, duracion, path, name):
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex, name), daemon=True)
+def run_camera(frames, duracion, path, name=None):
+    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex, name))
     t_camera.start()
+    return t_camera
 
 def run_detect_thread():
     t_detect = threading.Thread(target=detection.detection_run, args=(), daemon=True)
@@ -85,7 +86,8 @@ def ejecutar_registro():
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
 
-    run_camera(frames, 3, PATH_REGISTER, "JohnPork")#registramos el usuario JohnPork de prueba
+    rc=run_camera(frames, 3, PATH_REGISTER, "JohnPork")#registramos el usuario JohnPork de prueba
+    rc.join()
     print("=== REGISTRO COMPLETADO ===")
     xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
     recognizer = cv2.face.LBPHFaceRecognizer_create()

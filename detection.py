@@ -13,31 +13,50 @@ IMAGE_HEIGHT = 360
 
 def detection_run():
     print("detectando en detection_run....")
-    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
-        while(True): 
+    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+        while True:
             frame = frames.get()
+            if frame is None:
+                continue
 
             # To improve performance, optionally mark the image as not writeable to
             # pass by reference.
             frame.flags.writeable = False
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = face_detection.process(frame)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = face_detection.process(frame_rgb)
 
-            # Draw the face detection annotations on the image.
             frame.flags.writeable = True
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            if results.detections: #en results se guarda una lista de caras detectadas
+            # keep frame as BGR for display/IO
+            if results.detections:
                 print("CARA DETECTADA !!!!!!!")
+                h_img, w_img = frame.shape[:2]
                 for detection in results.detections:
                     bbox = detection.location_data.relative_bounding_box
-                    x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
-                    face_crop = frame[y:y+h, x:x+w]
-                    face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
-                    queue.detected.put(face_gray) #pasamos frame a la cola para reconocer 
-                    mp_drawing.draw_detection(frame, detection) #modifica el frame y le pone un rectangulo 
-                    queue.show_queue.put(frame)
-                    
-            else: 
+                    x = int(bbox.xmin * w_img)
+                    y = int(bbox.ymin * h_img)
+                    w = int(bbox.width * w_img)
+                    h = int(bbox.height * h_img)
+
+                    # Clamp values to image bounds
+                    x = max(0, x)
+                    y = max(0, y)
+                    w = max(0, min(w, w_img - x))
+                    h = max(0, min(h, h_img - y))
+
+                    if w == 0 or h == 0:
+                        print("Bounding box inválido, saltando.")
+                        continue
+
+                    face_crop = frame[y:y+h, x:x+w]  # frame is BGR
+                    if face_crop.size == 0:
+                        print("face_crop vacío, saltando.")
+                        continue
+
+                    face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # OK: BGR -> GRAY
+                    queue.detected.put(face_gray)
+                    mp_drawing.draw_detection(frame, detection)
+                queue.show_queue.put(frame)
+            else:
                 print("cara no detectada------")
                 queue.show_queue.put(frame)
 
@@ -66,44 +85,68 @@ def namesToDictionary(path):
     return names_labels
 
 
-def frame_detection(path, names_labels): #usado para el train
+def frame_detection(path, names_labels):  # usado para el train
     faces = []
     labels = []
 
-    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
-        for item in os.listdir(path): #recorremos las carpetas de las fotos de cada persona
+    with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
+        for item in os.listdir(path):
             full_path = os.path.join(path, item)
             person_name = item
             if os.path.isdir(full_path):
-
                 for file in os.listdir(full_path):
                     if file.endswith('.jpg'):
-                        image = cv2.imread(os.path.join(full_path, file)) # OJOOJOJ
+                        img_path = os.path.join(full_path, file)
+                        image_bgr = cv2.imread(img_path)
+                        if image_bgr is None:
+                            print(f"No se pudo leer la imagen: {img_path}")
+                            continue
 
-                        image.flags.writeable = False
-                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                        results = face_detection.process(image)
+                        # Para mediapipe necesitamos RGB
+                        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+                        image_rgb.flags.writeable = False
+                        results = face_detection.process(image_rgb)
 
-                        if results.detections: #en results se guarda una lista de caras detectadas
+                        if results.detections:
                             print("train detection: cara detectada")
-                            for detection in results.detections: #obtenemos la region de la cara ya que lbph trabaja con eso
+                            h_img, w_img = image_rgb.shape[:2]
+                            for detection in results.detections:
                                 bbox = detection.location_data.relative_bounding_box
-                                x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
-                                face_crop = image[y:y+h, x:x+w]
-                                face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
+                                x = int(bbox.xmin * w_img)
+                                y = int(bbox.ymin * h_img)
+                                w = int(bbox.width * w_img)
+                                h = int(bbox.height * h_img)
 
+                                # Clamp
+                                x = max(0, x)
+                                y = max(0, y)
+                                w = max(0, min(w, w_img - x))
+                                h = max(0, min(h, h_img - y))
+
+                                if w == 0 or h == 0:
+                                    print("Bounding box inválido en train, saltando.")
+                                    continue
+
+                                face_crop_rgb = image_rgb[y:y+h, x:x+w]
+                                if face_crop_rgb.size == 0:
+                                    print("face_crop vacío en train, saltando.")
+                                    continue
+
+                                # image_rgb -> gray: usar RGB2GRAY
+                                face_gray = cv2.cvtColor(face_crop_rgb, cv2.COLOR_RGB2GRAY)
                                 faces.append(face_gray)
                                 labels.append(names_labels[person_name])
-
-                        else: 
+                        else:
                             print("train detection: caras NO detectada")
 
     return faces, labels
 
+
 def boolean_face_detection(image): 
     res = False
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-
+        if image is None:
+            return False
         image.flags.writeable = False
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = face_detection.process(image)
