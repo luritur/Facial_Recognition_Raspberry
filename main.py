@@ -96,9 +96,6 @@ def ejecutar_registro():
 
 
 
-
-
-
 def ejecutar_run():
     global en_ejecucion, recognizer, names_labels
     if en_ejecucion:
