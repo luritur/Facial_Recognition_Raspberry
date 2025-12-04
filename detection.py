@@ -47,15 +47,22 @@ def detection_run():
 def namesToDictionary(path):
     names_labels = {}
     contador = 1
-    for file_name in os.listdir(path):
-        if file_name.endswith('.jpg'): 
-            print("fichero:"+file_name)
-            name = file_name.split(".")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro.jpg
-            print("name:"+name)
-            names_labels[name]=contador 
+
+    for item in os.listdir(path):
+        full_path = os.path.join(path, item)
+
+        # Verificar si es una carpeta
+        if os.path.isdir(full_path):
+            print("carpeta:" + item)
+
+            name = item  # El nombre de la carpeta ES el nombre de la persona
+            print("name:" + name)
+
+            names_labels[name] = contador
             print(f"label:{contador}")
 
-            contador +=1
+            contador += 1
+
     return names_labels
 
 
@@ -64,27 +71,35 @@ def frame_detection(path, names_labels): #usado para el train
     labels = []
 
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection: #'with' para liberar recursos automaticamente
-        for file in os.listdir(path):
-            if file.endswith('.jpg'):
-                image = cv2.imread(os.path.join(path, file)) # OJOOJOJ
-                name = file.split(".")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo pedro_1.jpg, maria_2.jpg.....
+        for item in os.listdir(path): #recorremos las carpetas de las fotos de cada persona
+            full_path = os.path.join(path, item)
+            person_name = item
+            if os.path.isdir(full_path):
+                for file in os.listdir(path):
+                    if file.endswith('.jpg'):
+                        image = cv2.imread(os.path.join(path, file)) # OJOOJOJ
+                        name = file.split(".")[0] #teniendo en cuenta que el nombre de los archivos sea algo tipo frame1.jpg, frame2.jpg.....
 
-                image.flags.writeable = False
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                results = face_detection.process(image)
-           
-                if results.detections: #en results se guarda una lista de caras detectadas
-                    print("train detection: cara detectada")
-                    for detection in results.detections: #obtenemos la region de la cara ya que lbph trabaja con eso
-                        bbox = detection.location_data.relative_bounding_box
-                        x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
-                        face_crop = image[y:y+h, x:x+w]
-                        face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
-                        faces.append(face_gray)
-                        labels.append(names_labels[name])
-           
-                else: 
-                    print("train detection: caras NO detectada")
+                        image.flags.writeable = False
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        results = face_detection.process(image)
+
+                        lista_frames_persona = []
+                        if results.detections: #en results se guarda una lista de caras detectadas
+                            print("train detection: cara detectada")
+                            for detection in results.detections: #obtenemos la region de la cara ya que lbph trabaja con eso
+                                bbox = detection.location_data.relative_bounding_box
+                                x, y, w, h = int(bbox.xmin * IMAGE_WIDTH), int(bbox.ymin * IMAGE_HEIGHT), int(bbox.width * IMAGE_WIDTH), int(bbox.height * IMAGE_HEIGHT)
+                                face_crop = image[y:y+h, x:x+w]
+                                face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY) #lbph trabaja con imagenes en escala de grises
+
+                                lista_frames_persona.append(face_gray)
+                
+                        else: 
+                            print("train detection: caras NO detectada")
+                labels.append(names_labels[person_name])
+                faces.append(lista_frames_persona)
+
     return faces, labels
 
 def boolean_face_detection(image): 

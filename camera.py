@@ -23,7 +23,6 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
     print(f"run.py: captura iniciada durante {duracion} segundos")
     inicio = time.time()
     frames_put=1
-    #frame_guardado = False   # Para guardar solo un frame
     if("frames" in path):#lanzamos hilo de detectar
         print("detectando........")
     if nombre_persona is not None:
@@ -61,3 +60,4 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
             print(f"Frame guardado en: {ruta}")
             frames_put+=1
     cap.release()
+    
