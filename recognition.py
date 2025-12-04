@@ -10,7 +10,7 @@ frames = queue.detected
 
 
 def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el bucle
-    label_name = {value: key for key, value in label.items()} #invertir el diccionario
+    label_name = {value: key for key, value in names_labels.items()} #invertir el diccionario
     print("reconociendo")
     while(True):
         #coger el frame de la cola frames 
