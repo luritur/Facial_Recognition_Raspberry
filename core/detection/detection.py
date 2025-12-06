@@ -1,5 +1,5 @@
 import mediapipe as mp
-import queue_class as queue
+import core.queues.queue_class as queue
 import cv2
 import os
 mp_face_detection = mp.solutions.face_detection

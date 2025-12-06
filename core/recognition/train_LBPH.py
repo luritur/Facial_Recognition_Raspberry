@@ -7,7 +7,7 @@
     #3. guardar el modelo entrenado como un fichero .xml
 import cv2
 import numpy as np
-import detection
+import core.detection.detection as detection
 
 
 def trainLBPH(path):
