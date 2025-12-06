@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Fichaje de Empleados{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+    }
+    .header-section h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    .filters-bar {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .filters-bar select, .filters-bar input {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 8px 15px;
+    }
+    .employee-table {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .table {
+        margin: 0;
+    }
+    .table thead {
+        background-color: #f8f9fa;
+    }
+    .table th {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        padding: 15px;
+    }
+    .table td {
+        border-top: 1px solid #f0f0f0;
+        padding: 15px;
+        vertical-align: middle;
+    }
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .status-online {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-online::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background-color: #28a745;
+        border-radius: 50%;
+    }
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        position: relative;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+    .time-display {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .task-badge {
+        background-color: #e9ecef;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    .completion-text {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h2>Empleados</h2>
+</div>
+
+<div class="filters-bar">
+    <select class="form-select" style="width: auto;">
+        <option>Centro</option>
+    </select>
+    <select class="form-select" style="width: auto;">
+        <option>Departamento</option>
+    </select>
+    <button class="btn btn-light">
+        <i class="bi bi-three-dots-vertical"></i>
+    </button>
+    <input type="search" class="form-control" placeholder="Buscar" style="max-width: 300px; margin-left: auto;">
+    <button class="btn btn-outline-secondary">Configuración gráf.</button>
+</div>
+
+<div class="employee-table">
+    <table class="table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>Empleado</th>
+                <th>Estado</th>
+                <th>Jornada</th>
+                <th>Horas hoy</th>
+                <th>% Computado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>
+                    <input type="checkbox">
+                </td>
+                <td>
+                    <div class="employee-info">
+                        <img src="{{ employee.avatar }}" alt="{{ employee.name }}" class="employee-avatar">
+                        <span class="employee-name">{{ employee.name }}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge status-online">Online</span>
+                </td>
+                <td>
+                    <div class="time-display">{{ employee.jornada }}</div>
+                    <div class="progress-bar-custom mt-2">
+                        <div class="progress-fill" style="width: progreso"></div>
+                    </div>
+                </td>
+                <td>
+                    <div class="time-display">{{ employee.horas_hoy }}</div>
+                    <div class="progress-bar-custom mt-2">
+                        <div class="progress-fill" style="width: progreso"></div>
+                    </div>
+                </td>
+                <td>
+                    <span class="task-badge">{{ employee.tareas }} tarea{% if employee.tareas != 1 %}s{% endif %}</span>
+                    <div class="completion-text mt-1">{{ employee.computado }}%</div>
+                </td>
+                <td>
+                    <div class="time-display">{{ employee.hora }}</div>
+                    <div class="progress-bar-custom mt-2">
+                        <div class="progress-fill" style="width:progreso"></div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

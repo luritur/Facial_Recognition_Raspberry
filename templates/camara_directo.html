@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Cámara en Directo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 30px;
+    }
+    .header-section h2 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    .camera-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .video-wrapper {
+        position: relative;
+        background: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+    }
+    .video-feed {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+    }
+    .live-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(220,53,69,0.9);
+        padding: 8px 15px;
+        border-radius: 20px;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .live-dot {
+        width: 10px;
+        height: 10px;
+        background: white;
+        border-radius: 50%;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .camera-info {
+        background: rgba(0,0,0,0.7);
+        padding: 8px 15px;
+        border-radius: 8px;
+        color: white;
+        font-size: 0.85rem;
+    }
+    .controls-panel {
+        margin-top: 20px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+    }
+    .control-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52,152,219,0.3);
+    }
+    .btn-danger {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+    }
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(231,76,60,0.3);
+    }
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108,117,125,0.3);
+    }
+    .info-panel {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+    .info-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    }
+    .info-card-title {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    .info-card-value {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    .no-camera {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+        text-align: center;
+        padding: 40px;
+    }
+    .no-camera i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+    .no-camera h3 {
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-section">
+    <h2>Cámara en Directo</h2>
+</div>
+
+<div class="camera-container">
+    <div class="video-wrapper">
+        <!-- Aquí irá tu stream de video. Por ahora mostramos un placeholder -->
+        <video id="videoFeed" class="video-feed" autoplay muted style="display: none;">
+            <!-- La fuente de video se configurará dinámicamente -->
+        </video>
+        
+        <!-- Placeholder cuando no hay cámara -->
+        <div class="no-camera" id="noCamera">
+            <i class="bi bi-camera-video-off"></i>
+            <h3>Cámara no disponible</h3>
+            <p>Conecta una cámara o configura el stream de video</p>
+        </div>
+
+        <div class="video-overlay">
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span>EN VIVO</span>
+            </div>
+            <div class="camera-info">
+                <i class="bi bi-clock"></i>
+                <span id="currentTime"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-panel">
+        <button class="control-btn btn-primary" onclick="startCamera()">
+            <i class="bi bi-play-circle"></i>
+            Iniciar Cámara
+        </button>
+        <button class="control-btn btn-danger" onclick="stopCamera()">
+            <i class="bi bi-stop-circle"></i>
+            Detener Cámara
+        </button>
+        <button class="control-btn btn-secondary" onclick="takeSnapshot()">
+            <i class="bi bi-camera"></i>
+            Capturar Imagen
+        </button>
+        <button class="control-btn btn-secondary" onclick="toggleFullscreen()">
+            <i class="bi bi-fullscreen"></i>
+            Pantalla Completa
+        </button>
+    </div>
+
+    <div class="info-panel">
+        <div class="info-card">
+            <div class="info-card-title">Estado de la cámara</div>
+            <div class="info-card-value" id="cameraStatus">Desconectada</div>
+        </div>
+        <div class="info-card">
+            <div class="info-card-title">Resolución</div>
+            <div class="info-card-value" id="resolution">1920x1080</div>
+        </div>
+        <div class="info-card">
+            <div class="info-card-title">FPS</div>
+            <div class="info-card-value" id="fps">30</div>
+        </div>
+        <div class="info-card">
+            <div class="info-card-title">Última captura</div>
+            <div class="info-card-value" id="lastCapture">-</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let stream = null;
+
+// Actualizar reloj
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('es-ES');
+    document.getElementById('currentTime').textContent = timeString;
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// Iniciar cámara
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            }, 
+            audio: false 
+        });
+        
+        const videoFeed = document.getElementById('videoFeed');
+        const noCamera = document.getElementById('noCamera');
+        
+        videoFeed.srcObject = stream;
+        videoFeed.style.display = 'block';
+        noCamera.style.display = 'none';
+        
+        document.getElementById('cameraStatus').textContent = 'Conectada';
+        
+        // Actualizar información de la cámara
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+        document.getElementById('resolution').textContent = `${settings.width}x${settings.height}`;
+        document.getElementById('fps').textContent = settings.frameRate || 30;
+        
+    } catch (error) {
+        console.error('Error al acceder a la cámara:', error);
+        alert('No se pudo acceder a la cámara. Verifica los permisos.');
+    }
+}
+
+// Detener cámara
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        
+        const videoFeed = document.getElementById('videoFeed');
+        const noCamera = document.getElementById('noCamera');
+        
+        videoFeed.style.display = 'none';
+        noCamera.style.display = 'flex';
+        
+        document.getElementById('cameraStatus').textContent = 'Desconectada';
+        stream = null;
+    }
+}
+
+// Capturar imagen
+function takeSnapshot() {
+    if (!stream) {
+        alert('Primero inicia la cámara');
+        return;
+    }
+    
+    const video = document.getElementById('videoFeed');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    // Convertir a blob y descargar
+    canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `captura_${new Date().getTime()}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        const now = new Date();
+        document.getElementById('lastCapture').textContent = now.toLocaleTimeString('es-ES');
+    }, 'image/jpeg');
+}
+
+// Pantalla completa
+function toggleFullscreen() {
+    const videoWrapper = document.querySelector('.video-wrapper');
+    
+    if (!document.fullscreenElement) {
+        videoWrapper.requestFullscreen().catch(err => {
+            console.error('Error al entrar en pantalla completa:', err);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Si quieres cargar un stream de video desde una URL (como una cámara IP o stream RTSP):
+// Descomenta y adapta esta función según tu configuración
+/*
+function loadVideoStream(url) {
+    const videoFeed = document.getElementById('videoFeed');
+    const noCamera = document.getElementById('noCamera');
+    
+    videoFeed.src = url;
+    videoFeed.style.display = 'block';
+    noCamera.style.display = 'none';
+    
+    document.getElementById('cameraStatus').textContent = 'Conectada (Stream)';
+}
+
+// Ejemplo de uso:
+// loadVideoStream('http://tu-camara-ip/stream');
+*/
+</script>
+{% endblock %}

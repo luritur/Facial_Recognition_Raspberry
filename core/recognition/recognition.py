@@ -3,8 +3,8 @@
 import cv2
 import os
 import numpy as np
-import queue_class as queue
-import detection 
+import core.queues.queue_class as queue
+import core.detection.detection as detection 
 
 frames = queue.detected
 

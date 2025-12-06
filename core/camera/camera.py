@@ -2,7 +2,7 @@ import os
 import shutil
 import cv2
 import time
-import detection
+import core.detection.detection as detection
 
 
 

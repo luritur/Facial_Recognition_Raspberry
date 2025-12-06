@@ -10,11 +10,11 @@ import show
 #import keyboard
 
 
-import detection
-import recognition
-import camera
-import queue_class as queue 
-import train_LBPH as train
+import core.detection.detection as detection
+import core.recognition.recognition as recognition
+import core.camera.camera as camera
+import core.queues.queue_class as queue 
+import core.recognition.train_LBPH as train
 
 # Pines BCM
 LED_PIN = 17
