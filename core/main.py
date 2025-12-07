@@ -6,23 +6,23 @@ import pandas as pd
 import os
 import sys
 
-# âœ… CONFIGURAR PATH (MUY IMPORTANTE)
+# CONFIGURAR PATH (MUY IMPORTANTE)
 # ========================================
 # Obtener la ruta de ESTE archivo (core/main.py)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))  # /path/to/core/
 
-# Obtener la ruta de la RAÃZ del proyecto (un nivel arriba)
+# Obtener la ruta de la RAIZ del proyecto (un nivel arriba)
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)  # /path/to/Facial_Recognition_Raspberry/
 
-# AÃ±adir la raÃ­z al path para que Python encuentre tanto 'show' como 'core'
+# Añadir la rai­z al path para que Python encuentre tanto 'show' como 'core'
 sys.path.insert(0, PROJECT_ROOT)
 
 # ========================================
-# âœ… IMPORTS (ahora todos funcionan)
+# IMPORTS (ahora todos funcionan)
 # ========================================
-import show  # âœ… Lo encuentra en la raÃ­z
+import show  # Lo encuentra en la rai­z
 
-# âœ… Imports de core/ con ruta absoluta desde la raÃ­z
+# Imports de core/ con ruta absoluta desde la rai­z
 import core.detection.detection as detection
 import core.recognition.recognition as recognition
 import core.camera.camera as camera
@@ -39,8 +39,8 @@ import core.recognition.train_LBPH as train
 
 # Pines BCM
 LED_PIN = 17
-BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
 BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
+BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
 led = LED(LED_PIN)
 camIndex = 0
 
@@ -60,7 +60,7 @@ def find_camera_index(max_index):
     for i in range(max_index):
         cap = cv2.VideoCapture(i)
         if cap.isOpened():
-            print(f"CÃ¡mara encontrada en el Ã­ndice {i}")
+            print(f"Camara encontrada en el indice {i}")
             cap.release()
             return i
         cap.release()
@@ -68,8 +68,8 @@ def find_camera_index(max_index):
 
 camIndex = find_camera_index(4)
 if camIndex is None:
-    print("âš ï¸ ADVERTENCIA: No se detectÃ³ cÃ¡mara al inicio.")
-    print("   Se intentarÃ¡ abrir la cÃ¡mara cuando ejecutes registro/run.")
+    print("ADVERTENCIA: No se detecta camara al inicio.")
+    print("Se intentara abrir la camara cuando ejecutes registro/run.")
     camIndex = 0  # Valor por defecto
 
 def run_camera(frames, duracion, path, name=None):
@@ -83,7 +83,7 @@ def run_detect_thread():
         t_detect = threading.Thread(target=detection.detection_run, daemon=True)
         t_detect.start()
         run_detect_thread.started = True
-        print("âœ… Hilo de detecciÃ³n iniciado")
+        print("Hilo de deteccion iniciado")
 
 
 def run_recognition_thread(recognizer, names_labels):
@@ -94,7 +94,7 @@ def run_recognition_thread(recognizer, names_labels):
                                          daemon=True)
         t_recognition.start()
         run_recognition_thread.started = True
-        print("âœ… Hilo de reconocimiento iniciado")
+        print("Hilo de reconocimiento iniciado")
 
 def run_show_video(): 
     t_video = threading.Thread(target=show.show_video_run, args=(), daemon=True)
@@ -102,7 +102,7 @@ def run_show_video():
 
 """
 def test_camara():
-    print("=== TEST DE CÃMARA ===")
+    print("=== TEST DE CAMARA ===")
     camara_run(frames=queue.Queue(), duracion=5, camera_index=camIndex,)
     print("=== FIN DEL TEST ===")
 """
@@ -116,7 +116,7 @@ def ejecutar_registro():
     global en_ejecucion, recognizer, names_labels  # Importante: actualizar las variables globales
 
     if en_ejecucion:
-        print("Ya hay una acciÃ³n en ejecuciÃ³n.")
+        print("Ya hay una accion en ejecucion.")
         return
     
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
@@ -154,7 +154,7 @@ def ejecutar_registro():
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_usuario}")
     print("=== REGISTRO COMPLETADO ===")
-    
+
     xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
     
     recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -169,7 +169,7 @@ def ejecutar_run():
     global en_ejecucion, recognizer, names_labels
 
     if en_ejecucion:
-        print("Ya hay una acciÃ³n en ejecuciÃ³n.")
+        print("Ya hay una accion en ejecucion.")
         return
     
     if recognizer is None or names_labels is None:
