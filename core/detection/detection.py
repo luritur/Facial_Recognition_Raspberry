@@ -53,8 +53,9 @@ def detection_run():
                         continue
 
                     face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # OK: BGR -> GRAY
+                    face_gray = cv2.resize(face_gray, (100, 100))
                     queue.detected.put(face_gray)
-                    mp_drawing.draw_detection(frame, detection)
+                    #mp_drawing.draw_detection(frame, detection) DA ERROR AL IGUAL QUE UN IMSHOW
                 queue.show_queue.put(frame)
             else:
                 print("cara no detectada------")
@@ -134,6 +135,7 @@ def frame_detection(path, names_labels):  # usado para el train
 
                                 # image_rgb -> gray: usar RGB2GRAY
                                 face_gray = cv2.cvtColor(face_crop_rgb, cv2.COLOR_RGB2GRAY)
+                                face_gray = cv2.resize(face_gray, (100, 100))
                                 faces.append(face_gray)
                                 labels.append(names_labels[person_name])
                         else:
