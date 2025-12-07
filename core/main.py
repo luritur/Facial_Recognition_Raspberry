@@ -22,6 +22,7 @@ BTN_REGISTRAR = Button(23, pull_up=True)    # aumenta frecuencia
 BTN_RUN = Button(24, pull_up=True)  # disminuye frecuencia
 led = LED(LED_PIN)
 camIndex = 0
+
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 registered_dni_csv = pd.read_csv(os.path.join(BASE_PATH, "registeredDNI.csv"))
 
@@ -34,17 +35,18 @@ names_labels = None
 frames = queue.frames
 
 
-for i in range(2):
-    cap = cv2.VideoCapture(i)
-    if cap.isOpened():
-        print(f"Camara {i} OK")
-        camIndex=i
-        #break
-    else: 
-        print(f"Camara {i} NO DISPONIBLE")
+def find_camera_index(max_index=3):
+    for i in range(max_index):
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            cap.release()
+            return i
+        cap.release()
+    return None
 
-
-
+camIndex = find_camera_index(4)
+if camIndex is None:
+    raise RuntimeError("❌ No se pudo localizar ninguna cámara USB.")
 
 def run_camera(frames, duracion, path, name=None):
     t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex, name))
@@ -52,13 +54,21 @@ def run_camera(frames, duracion, path, name=None):
     return t_camera
 
 def run_detect_thread():
-    t_detect = threading.Thread(target=detection.detection_run, args=(), daemon=True)
-    t_detect.start()
+    # Solo lanzar detection si no existe ya
+    if not getattr(run_detect_thread, "started", False):
+        t_detect = threading.Thread(target=detection.detection_run, daemon=True)
+        t_detect.start()
+        run_detect_thread.started = True
 
 
 def run_recognition_thread(recognizer, names_labels):
-    t_recognition = threading.Thread(target=recognition.recognition_run, args=(recognizer, names_labels), daemon=True)
-    t_recognition.start()
+    # Solo lanzar recognition si no existe ya
+    if not getattr(run_recognition_thread, "started", False):
+        t_recognition = threading.Thread(target=recognition.recognition_run,
+                                         args=(recognizer, names_labels),
+                                         daemon=True)
+        t_recognition.start()
+        run_recognition_thread.started = True
 
 def run_show_video(): 
     t_video = threading.Thread(target=show.show_video_run, args=(), daemon=True)
@@ -82,14 +92,17 @@ def ejecutar_registro():
     if en_ejecucion:
         print("Ya hay una acción en ejecución.")
         return
+    
     #PONE EL "EN_EJECUCION" A TRUE PARA NO PODER EJECUTAR LA OTRA FUNCION (run) SI INTENTAMOS HACERLO
     en_ejecucion = True
     print("=== REGISTRANDO TRABAJADOR ===")
 
     rc=run_camera(frames, 3, PATH_REGISTER, "JohnPork")#registramos el usuario JohnPork de prueba
     rc.join()
+
     print("=== REGISTRO COMPLETADO ===")
     xml = train.trainLBPH(PATH_REGISTER) #cada vez que registremos una persona nueva hay que entrenar el modelo con esa persona nueva
+    
     recognizer = cv2.face.LBPHFaceRecognizer_create()
     recognizer.read(xml)
     names_labels = detection.namesToDictionary(PATH_REGISTER)
@@ -100,6 +113,7 @@ def ejecutar_registro():
 
 def ejecutar_run():
     global en_ejecucion, recognizer, names_labels
+
     if en_ejecucion:
         print("Ya hay una acción en ejecución.")
         return
@@ -115,7 +129,7 @@ def ejecutar_run():
     run_camera(frames, 10, PATH_IMAGENES)
     run_detect_thread()
     run_recognition_thread(recognizer, names_labels)
-    run_show_video() 
+    #run_show_video() 
 
     #test_camara()
     en_ejecucion = False
@@ -132,4 +146,6 @@ try:
 except KeyboardInterrupt:
     print("Saliendo...")
     led.off()
+    if camera_cap:
+        camera_cap.release()
 
