@@ -5,34 +5,26 @@ import os
 import numpy as np
 import core.queues.queue_class as queue
 import core.detection.detection as detection 
-import queue as queue_module
 
 frames = queue.detected
-THRESHOLD = 70  # Ajusta según los resultados que veas
+THRESHOLD = 70  # Ajusta segÃºn los resultados que veas
 
 
 
 def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el bucle
     label_name = {value: key for key, value in names_labels.items()} #invertir el diccionario
     print("reconociendo")
-    print(f"📋 Personas registradas: {label_name}")
+    print(f"ðŸ“‹ Personas registradas: {label_name}")
     while(True):
         #coger el frame de la cola frames 
         #reconocer el frame 
-        try:
-            face_gray = queue.detected.get(timeout=1) #tiene que leer de detected, no de frames
-        except queue_module.Empty:
-            continue
+        face_gray = queue.detected.get() #tiene que leer de detected, no de frames
         # 2. Redimensionar para consistencia (IMPORTANTE)
-        face_resized = cv2.resize(face_gray, (100, 100))  # ✅ AÑADIDO
+        face_resized = cv2.resize(face_gray, (100, 100))  # âœ… AÃ‘ADIDO
 
-        with queue.model_lock:
-            if recognizer is None:
-                print("⚠️ Modelo no disponible")
-                continue
-            label, confidence = recognizer.predict(face_resized)
         # Recognize and label the faces
          # Recognize the face using the trained model
+        label, confidence = recognizer.predict(face_resized)
 
         # 4. DEBUG: Imprimir SIEMPRE los valores
         print(f"Label: {label_name[label]}, Confidence: {confidence:.2f}")   #(para ver los thresholds y poder cambiar luego el if)
