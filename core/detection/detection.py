@@ -1,4 +1,4 @@
-import mediapipe as mp
+import mediapipe as mp #esta en warning pero al ejecutar funciona
 import core.queues.queue_class as queue
 import cv2
 import os
