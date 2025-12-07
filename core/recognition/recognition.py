@@ -5,6 +5,7 @@ import os
 import numpy as np
 import core.queues.queue_class as queue
 import core.detection.detection as detection 
+import queue as queue_module
 
 frames = queue.detected
 THRESHOLD = 70  # Ajusta según los resultados que veas
@@ -18,13 +19,20 @@ def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el 
     while(True):
         #coger el frame de la cola frames 
         #reconocer el frame 
-        face_gray = queue.detected.get() #tiene que leer de detected, no de frames
+        try:
+            face_gray = queue.detected.get(timeout=1) #tiene que leer de detected, no de frames
+        except queue_module.Empty:
+            continue
         # 2. Redimensionar para consistencia (IMPORTANTE)
         face_resized = cv2.resize(face_gray, (100, 100))  # ✅ AÑADIDO
 
+        with queue.model_lock:
+            if recognizer is None:
+                print("⚠️ Modelo no disponible")
+                continue
+            label, confidence = recognizer.predict(face_resized)
         # Recognize and label the faces
          # Recognize the face using the trained model
-        label, confidence = recognizer.predict(face_resized)
 
         # 4. DEBUG: Imprimir SIEMPRE los valores
         print(f"Label: {label_name[label]}, Confidence: {confidence:.2f}")   #(para ver los thresholds y poder cambiar luego el if)
