@@ -14,7 +14,7 @@ THRESHOLD = 70  # Ajusta segÃºn los resultados que veas
 def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el bucle
     label_name = {value: key for key, value in names_labels.items()} #invertir el diccionario
     print("reconociendo")
-    print(f"ðŸ“‹ Personas registradas: {label_name}")
+    print(f"Personas registradas: {label_name}")
     while(True):
         #coger el frame de la cola frames 
         #reconocer el frame 

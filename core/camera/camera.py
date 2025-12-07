@@ -17,7 +17,7 @@ def borrar_contenido_carpeta(ruta):
             
 
 def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
-    """Intentar abrir la cÃ¡mara varias veces."""
+    """Intentar abrir la camara varias veces."""
     for intento in range(1, retries+1):
         cap = cv2.VideoCapture(camera_index)
         if cap.isOpened():
@@ -34,7 +34,7 @@ def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
 def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = _open_camera_with_retries(camera_index, retries=4, delay=0.8)
     if cap is None:
-        print(f"ERROR: No se pudo abrir la cÃ¡mara index={camera_index} tras varios intentos")
+        print(f"ERROR: No se pudo abrir la camara index={camera_index} tras varios intentos")
         return
     
     try:
@@ -64,7 +64,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                         time.sleep(0.8)
                         cap = _open_camera_with_retries(camera_index, retries=3, delay=0.8)
                         if cap is None:
-                            print("[camera] No se pudo reabrir la cÃ¡mara, saliendo del bucle de registro.")
+                            print("[camera] No se pudo reabrir la camara, saliendo del bucle de registro.")
                             break
                         consecutive_failures = 0
                     continue
@@ -95,7 +95,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                         time.sleep(0.8)
                         cap = _open_camera_with_retries(camera_index, retries=3, delay=0.8)
                         if cap is None:
-                            print("[camera] No se pudo reabrir la cÃ¡mara, saliendo del bucle de run.")
+                            print("[camera] No se pudo reabrir la camara, saliendo del bucle de run.")
                             break
                         consecutive_failures = 0
                     continue
@@ -116,8 +116,8 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
     finally:
         try:
             cap.release()
-            print("[camera] cÃ¡mara liberada correctamente.")
+            print("[camera] camara liberada correctamente.")
         except Exception as e:
-            print(f"[camera] Error liberando cÃ¡mara: {e}")
+            print(f"[camera] Error liberando camara: {e}")
     
     return
