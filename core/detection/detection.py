@@ -1,4 +1,4 @@
-import mediapipe as mp #esta en warning pero al ejecutar funciona
+import mediapipe as mp
 import core.queues.queue_class as queue
 import cv2
 import os
@@ -14,11 +14,8 @@ IMAGE_HEIGHT = 360
 def detection_run():
     print("detectando en detection_run....")
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-        while not queue.stop_detection.is_set():
-            try:
-                frame = frames.get(timeout=1)  # Esperar 1 segundo por un frame
-            except queue.stop_detection.empty:
-                continue
+        while True:
+            frame = frames.get()
             if frame is None:
                 continue
 
@@ -47,28 +44,22 @@ def detection_run():
                     h = max(0, min(h, h_img - y))
 
                     if w == 0 or h == 0:
-                        print("Bounding box inválido, saltando.")
+                        print("Bounding box invÃ¡lido, saltando.")
                         continue
 
                     face_crop = frame[y:y+h, x:x+w]  # frame is BGR
                     if face_crop.size == 0:
-                        print("face_crop vacío, saltando.")
+                        print("face_crop vacÃ­o, saltando.")
                         continue
 
                     face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # OK: BGR -> GRAY
                     face_gray = cv2.resize(face_gray, (100, 100))
                     queue.detected.put(face_gray)
                     #mp_drawing.draw_detection(frame, detection) DA ERROR AL IGUAL QUE UN IMSHOW
-                try:
-                    queue.show_queue.put(frame)
-                except queue.Full:
-                    pass
+                queue.show_queue.put(frame)
             else:
                 print("cara no detectada------")
-                try:
-                    queue.show_queue.put(frame, timeout=0.5)
-                except queue.Full:
-                    pass
+                queue.show_queue.put(frame)
 
 
 
@@ -134,12 +125,12 @@ def frame_detection(path, names_labels):  # usado para el train
                                 h = max(0, min(h, h_img - y))
 
                                 if w == 0 or h == 0:
-                                    print("Bounding box inválido en train, saltando.")
+                                    print("Bounding box invÃ¡lido en train, saltando.")
                                     continue
 
                                 face_crop_rgb = image_rgb[y:y+h, x:x+w]
                                 if face_crop_rgb.size == 0:
-                                    print("face_crop vacío en train, saltando.")
+                                    print("face_crop vacÃ­o en train, saltando.")
                                     continue
 
                                 # image_rgb -> gray: usar RGB2GRAY
@@ -167,8 +158,3 @@ def boolean_face_detection(image):
         else: 
             print("train detection: caras NO detectada")
     return res
-
-
-
-
-    

@@ -17,7 +17,7 @@ def borrar_contenido_carpeta(ruta):
             
 
 def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
-    """Intentar abrir la cámara varias veces."""
+    """Intentar abrir la cÃ¡mara varias veces."""
     for intento in range(1, retries+1):
         cap = cv2.VideoCapture(camera_index)
         if cap.isOpened():
@@ -34,13 +34,13 @@ def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
 def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = _open_camera_with_retries(camera_index, retries=4, delay=0.8)
     if cap is None:
-        print(f"ERROR: No se pudo abrir la cámara index={camera_index} tras varios intentos")
+        print(f"ERROR: No se pudo abrir la cÃ¡mara index={camera_index} tras varios intentos")
         return
     
     try:
         if "frames" in path:
             borrar_contenido_carpeta(path)
-            os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True)
 
         print(f"run.py: captura iniciada durante {duracion} segundos")
         inicio = time.time()
@@ -64,7 +64,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                         time.sleep(0.8)
                         cap = _open_camera_with_retries(camera_index, retries=3, delay=0.8)
                         if cap is None:
-                            print("[camera] No se pudo reabrir la cámara, saliendo del bucle de registro.")
+                            print("[camera] No se pudo reabrir la cÃ¡mara, saliendo del bucle de registro.")
                             break
                         consecutive_failures = 0
                     continue
@@ -95,7 +95,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                         time.sleep(0.8)
                         cap = _open_camera_with_retries(camera_index, retries=3, delay=0.8)
                         if cap is None:
-                            print("[camera] No se pudo reabrir la cámara, saliendo del bucle de run.")
+                            print("[camera] No se pudo reabrir la cÃ¡mara, saliendo del bucle de run.")
                             break
                         consecutive_failures = 0
                     continue
@@ -108,7 +108,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                     # No dejar que la encolada detenga el hilo; solo loggear
                     print(f"[camera] Error al encolar frame: {e}")
 
-                # Guardar copia en disco (nombres únicos)
+                # Guardar copia en disco (nombres Ãºnicos)
                 ruta = os.path.join(path, f"frame{frames_put}.jpg")
                 cv2.imwrite(ruta, frame)
                 print(f"Frame guardado en: {ruta}")
@@ -116,8 +116,8 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
     finally:
         try:
             cap.release()
-            print("[camera] cámara liberada correctamente.")
+            print("[camera] cÃ¡mara liberada correctamente.")
         except Exception as e:
-            print(f"[camera] Error liberando cámara: {e}")
+            print(f"[camera] Error liberando cÃ¡mara: {e}")
     
     return
