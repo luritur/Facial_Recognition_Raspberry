@@ -1,4 +1,4 @@
-import queue_class as queue
+import core.queues.queue_class as queue  # ✅ BIEN
 import cv2
 
 def show_video_run():

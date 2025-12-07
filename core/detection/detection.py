@@ -14,8 +14,11 @@ IMAGE_HEIGHT = 360
 def detection_run():
     print("detectando en detection_run....")
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-        while True:
-            frame = frames.get()
+        while not queue.stop_detection.is_set():
+            try:
+                frame = frames.get(timeout=1)  # Esperar 1 segundo por un frame
+            except queue.stop_detection.empty:
+                continue
             if frame is None:
                 continue
 
@@ -56,10 +59,16 @@ def detection_run():
                     face_gray = cv2.resize(face_gray, (100, 100))
                     queue.detected.put(face_gray)
                     #mp_drawing.draw_detection(frame, detection) DA ERROR AL IGUAL QUE UN IMSHOW
-                queue.show_queue.put(frame)
+                try:
+                    queue.show_queue.put(frame)
+                except queue.Full:
+                    pass
             else:
                 print("cara no detectada------")
-                queue.show_queue.put(frame)
+                try:
+                    queue.show_queue.put(frame, timeout=0.5)
+                except queue.Full:
+                    pass
 
 
 
