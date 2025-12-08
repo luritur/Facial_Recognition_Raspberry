@@ -109,19 +109,19 @@
         </div>
         <nav class="nav flex-column">
             <div class="nav-item">
-                <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2"></i>
                     <span>Fichaje de Empleados</span>
                 </a>
             </div>
             <div class="nav-item">
-                <a href="{{ url_for('registro_empleados') }}" class="nav-link {% if request.endpoint == 'registro_empleados' %}active{% endif %}">
+                <a href="{{ url_for('main.registro_empleados') }}" class="nav-link {% if request.endpoint == 'registro_empleados' %}active{% endif %}">
                     <i class="bi bi-people"></i>
                     <span>Registro de Empleados</span>
                 </a>
             </div>
             <div class="nav-item">
-                <a href="{{ url_for('camara_directo') }}" class="nav-link {% if request.endpoint == 'camara_directo' %}active{% endif %}">
+                <a href="{{ url_for('main.camara') }}" class="nav-link {% if request.endpoint == 'camara_directo' %}active{% endif %}">
                     <i class="bi bi-camera-video"></i>
                     <span>Cámara en Directo</span>
                 </a>
