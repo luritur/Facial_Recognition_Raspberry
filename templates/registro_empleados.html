@@ -498,11 +498,11 @@
                     <!-- Los mensajes aparecerán aquí -->
                 </div>
                 
-                <div class="camera-preview" id="cameraPreview">
-                    <img id="videoFeed" src="/video_feed" alt="Cámara" style="display: none;">
-                    <div class="camera-placeholder">📹 Cámara lista</div>
-                    <div id="countdown" class="countdown" style="display: none;">3</div>
-                </div>
+                    <div class="camera-preview" id="cameraPreview">
+                        <img id="videoFeed" src="{{ url_for('video.register_video_feed') }}" alt="Cámara" class="video-feed">
+                        <div class="camera-placeholder" style="display: none;">📹 Cámara lista</div>
+                        <div id="countdown" class="countdown" style="display: none;">3</div>
+                    </div>
             </div>
         </div>
         
@@ -683,7 +683,7 @@ function actualCapture(nombre, dni) {
         '<div class="alert alert-info">📸 Capturando rostro... Mantén la mirada fija en la cámara</div>';
     
     // Llamar a la API de registro
-    fetch('/api/registrar', {
+    fetch('/api/api/registrar', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -173,13 +173,11 @@
 
 <div class="camera-container">
     <div class="video-wrapper">
-        <!-- Aquí irá tu stream de video. Por ahora mostramos un placeholder -->
-        <video id="videoFeed" class="video-feed" autoplay muted style="display: none;">
-            <!-- La fuente de video se configurará dinámicamente -->
-        </video>
-        
+        <!-- Stream de video -->
+        <img id="videoFeed" class="video-feed" src="{{ url_for('video.recognition_video_feed') }}" alt="Cámara en vivo">
+
         <!-- Placeholder cuando no hay cámara -->
-        <div class="no-camera" id="noCamera">
+        <div class="no-camera" id="noCamera" style="display: none;">
             <i class="bi bi-camera-video-off"></i>
             <h3>Cámara no disponible</h3>
             <p>Conecta una cámara o configura el stream de video</p>
@@ -196,15 +194,17 @@
             </div>
         </div>
     </div>
+</div>
+
 
     <div class="controls-panel">
-        <button class="control-btn btn-primary" onclick="startCamera()">
+        <button class="control-btn btn-primary" onclick="startRecognition()">
             <i class="bi bi-play-circle"></i>
-            Iniciar Cámara
+            Iniciar Reconocimiento
         </button>
-        <button class="control-btn btn-danger" onclick="stopCamera()">
+        <button class="control-btn btn-danger" onclick="stopRecognition()">
             <i class="bi bi-stop-circle"></i>
-            Detener Cámara
+            Detener Reconocimiento
         </button>
         <button class="control-btn btn-secondary" onclick="takeSnapshot()">
             <i class="bi bi-camera"></i>
@@ -248,53 +248,67 @@ function updateTime() {
 setInterval(updateTime, 1000);
 updateTime();
 
-// Iniciar cámara
-async function startCamera() {
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }, 
-            audio: false 
-        });
+// // Iniciar cámara
+// async function startCamera() {
+//     try {
+//         stream = await navigator.mediaDevices.getUserMedia({ 
+//             video: { 
+//                 width: { ideal: 1920 },
+//                 height: { ideal: 1080 }
+//             }, 
+//             audio: false 
+//         });
         
-        const videoFeed = document.getElementById('videoFeed');
-        const noCamera = document.getElementById('noCamera');
+//         const videoFeed = document.getElementById('videoFeed');
+//         const noCamera = document.getElementById('noCamera');
         
-        videoFeed.srcObject = stream;
-        videoFeed.style.display = 'block';
-        noCamera.style.display = 'none';
+//         videoFeed.srcObject = stream;
+//         videoFeed.style.display = 'block';
+//         noCamera.style.display = 'none';
         
-        document.getElementById('cameraStatus').textContent = 'Conectada';
+//         document.getElementById('cameraStatus').textContent = 'Conectada';
         
-        // Actualizar información de la cámara
-        const videoTrack = stream.getVideoTracks()[0];
-        const settings = videoTrack.getSettings();
-        document.getElementById('resolution').textContent = `${settings.width}x${settings.height}`;
-        document.getElementById('fps').textContent = settings.frameRate || 30;
+//         // Actualizar información de la cámara
+//         const videoTrack = stream.getVideoTracks()[0];
+//         const settings = videoTrack.getSettings();
+//         document.getElementById('resolution').textContent = `${settings.width}x${settings.height}`;
+//         document.getElementById('fps').textContent = settings.frameRate || 30;
         
-    } catch (error) {
-        console.error('Error al acceder a la cámara:', error);
-        alert('No se pudo acceder a la cámara. Verifica los permisos.');
-    }
-}
+//     } catch (error) {
+//         console.error('Error al acceder a la cámara:', error);
+//         alert('No se pudo acceder a la cámara. Verifica los permisos.');
+//     }
+// }
 
-// Detener cámara
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+function startRecognition() {
+      fetch('api/api/initrecognition', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => console.log(data))
+          .catch(err => console.error(err));
+  }
+
+  function stopRecognition() {
+      fetch('api/api/endrecognition', { method: 'POST' })
+          .then(response => response.json())
+          .then(data => console.log(data))
+          .catch(err => console.error(err));
+  }
+
+// // Detener cámara
+// function stopCamera() {
+//     if (stream) {
+//         stream.getTracks().forEach(track => track.stop());
         
-        const videoFeed = document.getElementById('videoFeed');
-        const noCamera = document.getElementById('noCamera');
+//         const videoFeed = document.getElementById('videoFeed');
+//         const noCamera = document.getElementById('noCamera');
         
-        videoFeed.style.display = 'none';
-        noCamera.style.display = 'flex';
+//         videoFeed.style.display = 'none';
+//         noCamera.style.display = 'flex';
         
-        document.getElementById('cameraStatus').textContent = 'Desconectada';
-        stream = null;
-    }
-}
+//         document.getElementById('cameraStatus').textContent = 'Desconectada';
+//         stream = null;
+//     }
+// }
 
 // Capturar imagen
 function takeSnapshot() {
