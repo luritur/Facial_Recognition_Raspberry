@@ -6,6 +6,16 @@ import os
 import sys
 import platform
 
+import core.show as show
+import core.detection.detection as detection
+import core.recognition.recognition as recognition
+import core.camera.camera as camera
+import core.queues.colas as queue 
+import core.recognition.train_LBPH as train
+
+from core.control import hilos_activos
+from core.control import stop_event
+import core.control as control
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -48,15 +58,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, PROJECT_ROOT)
 
-# ========================================
-# IMPORTS
-# ========================================
-import core.show as show
-import core.detection.detection as detection
-import core.recognition.recognition as recognition
-import core.camera.camera as camera
-import core.queues.queue_class as queue 
-import core.recognition.train_LBPH as train
+
 
 # ========================================
 # CONFIGURACIÓN DE HARDWARE
@@ -75,8 +77,23 @@ PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 PATH_IMAGENES = "/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
 
 
-recognizer = None
-names_labels = None
+
+   # recognizer.save('/home/pi/Facial_Recognition_Raspberry/trained_model.xml')
+    #return '/home/pi/Facial_Recognition_Raspberry/trained_model.xml'
+MODEL_PATH = "/home/pi/Facial_Recognition_Raspberry/trained_model.xml"
+
+if os.path.isfile(MODEL_PATH):
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+
+    recognizer.read (MODEL_PATH)
+    names_labels = detection.namesToDictionary(PATH_REGISTER) 
+else: 
+    recognizer = None
+    names_labels = None
+
+
+
+
 frames = queue.frames
 
 # ========================================
@@ -98,9 +115,11 @@ if camIndex is None:
     print("Se intentará abrir la cámara cuando ejecutes registro/run.")
     camIndex = 0
 
-def run_camera(frames, duracion, path, name=None):
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, camIndex, name))
+
+def run_camera_thread(frames, duracion, path, name=None):
+    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, 0, name))
     t_camera.start()
+    hilos_activos.append(t_camera)
     return t_camera
 
 def run_detect_thread():
@@ -108,7 +127,10 @@ def run_detect_thread():
         t_detect = threading.Thread(target=detection.detection_run, daemon=True)
         t_detect.start()
         run_detect_thread.started = True
-        print("🔍 Hilo de detección iniciado")
+        #print("🔍 Hilo de detección iniciado")
+        hilos_activos.append(t_detect)
+
+    
 
 def run_recognition_thread(recognizer, names_labels):
     if not getattr(run_recognition_thread, "started", False):
@@ -118,10 +140,40 @@ def run_recognition_thread(recognizer, names_labels):
         t_recognition.start()
         run_recognition_thread.started = True
         #print("👤 Hilo de reconocimiento iniciado")
+        hilos_activos.append(t_recognition)
+
+
+
+def run_entrenar_modelo_thread(nombre_empleado):
+
+    if control.entrenando_modelo: 
+        print("Entrenamiento ya en curso, no inicie otro")
+        return 
+    
+    control.entrenando_modelo = True
+    t_entrenar_modelo = threading.Thread(target=train_model,args=(nombre_empleado,),daemon=True)
+    t_entrenar_modelo.start()
+    hilos_activos.append(t_entrenar_modelo)
+
+        
+
+def train_model(nombre_empleado):
+    global recognizer, names_labels
+    print("🔄 Entrenando modelo...")
+    
+    xml = train.trainLBPH(PATH_REGISTER)
+    
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
+    recognizer.read(xml)
+    names_labels = detection.namesToDictionary(PATH_REGISTER) 
+    control.entrenando_modelo = False
+
+    print(f"MODELO ENTRENADO CON EL NUEVO EMPLEADO: {nombre_empleado}")
+
 
 en_ejecucion = False
 
-def ejecutar_registro(nombre_usuario):
+def ejecutar_registro(nombre_empleado):
     global en_ejecucion, recognizer, names_labels
 
     if en_ejecucion:
@@ -129,59 +181,26 @@ def ejecutar_registro(nombre_usuario):
         return
     
     en_ejecucion = True
-    # print("\n" + "="*50) 
-    # print("=== REGISTRANDO TRABAJADOR ===") 
-    # print("="*50 + "\n") 
     
-    # nombre_usuario = None 
-    # while nombre_usuario is None or nombre_usuario.strip() == "":
-    #     nombre_usuario = input("Introduce el nombre de usuario: ").strip()
-    #     if not nombre_usuario: 
-    #         print("❌ El nombre no puede estar vacío. Intenta de nuevo.") 
-    #         continue
-        
-    #     persona_path = os.path.join("C:/3Año/arquitectura/Facial_Recognition_Raspberry/imagenes/registro", nombre_usuario) 
-    #     if os.path.exists(persona_path): 
-    #         print(f"⚠️ El usuario '{nombre_usuario}' ya está registrado.") 
-    #         respuesta = input("¿Quieres reentrenar con nuevas fotos? (s/n): ").lower()
-    #         if respuesta != 's': 
-    #             nombre_usuario = None 
-    #             continue 
-    #         else:
-    #             import shutil 
-    #             shutil.rmtree(persona_path) 
-    #             print(f"🗑️ Fotos antiguas de '{nombre_usuario}' eliminadas") 
-    #             break 
-    #     break 
-    
-    # print(f"\n✅ Registrando usuario: {nombre_usuario}") 
-    # print("📸 Prepárate... Captura en 3 segundos\n") 
-    
-    rc = run_camera(frames, 3, PATH_REGISTER, nombre_usuario)
+    rc = run_camera_thread(frames, 8, PATH_REGISTER, nombre_empleado)
     rc.join() 
     
-    persona_path = os.path.join(PATH_REGISTER, nombre_usuario) 
+    persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
         en_ejecucion = False
         return 
     
     num_fotos = len(os.listdir(persona_path)) 
-    print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_usuario}")
-    print("🔄 Entrenando modelo...")
-    
-    xml = train.trainLBPH(PATH_REGISTER)
-    
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
-    recognizer.read(xml)
-    names_labels = detection.namesToDictionary(PATH_REGISTER)
-    
+    print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
+    run_entrenar_modelo_thread(nombre_empleado)
+
     print("=== REGISTRO COMPLETADO ===\n")
     en_ejecucion = False
 
 def ejecutar_run():
     global en_ejecucion, recognizer, names_labels
-
+    stop_event.clear()
     if en_ejecucion:
         print("⚠️ Ya hay una acción en ejecución.")
         return
@@ -195,13 +214,27 @@ def ejecutar_run():
     print("=== INICIANDO RUN (10 segundos) ===")
     print("="*50 + "\n")
     
-    run_camera(frames, 10, PATH_IMAGENES)
+    run_camera_thread(frames, 10, PATH_IMAGENES)
     run_detect_thread()
     run_recognition_thread(recognizer, names_labels)
     
     en_ejecucion = False
     print("\n=== RUN COMPLETADO ===\n")
 
+def detener_run():
+    global hilos_activos, en_ejecucion
+    stop_event.set() #activamos el flag para parar los hilos (camara, deteccion y reconocimiento)
+    for t in hilos_activos: 
+        t.join()       # Espera a que cada hilo termine correctamente
+        hilos_activos.remove(t)
+    en_ejecucion = False
+    #borramos contenido de las colas
+    queue.clear_queues()
+    run_detect_thread.started = False
+    run_recognition_thread.started = False
+        
+
+    print("✅ Reconocimiento detenido de forma segura")
 # ========================================
 # ASIGNAR CALLBACKS
 # ========================================

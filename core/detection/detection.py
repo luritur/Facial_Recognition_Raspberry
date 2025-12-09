@@ -1,7 +1,9 @@
 import mediapipe as mp
-import core.queues.queue_class as queue
+import core.queues.colas as queue
 import cv2
 import os
+from core.control import stop_event
+
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 frames = queue.frames
@@ -14,7 +16,7 @@ IMAGE_HEIGHT = 360
 def detection_run():
     print("detectando en detection_run....")
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
-        while True:
+        while not stop_event.is_set():
             frame = frames.get()
             if frame is None:
                 continue
@@ -55,7 +57,7 @@ def detection_run():
                     face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # OK: BGR -> GRAY
                     face_gray = cv2.resize(face_gray, (100, 100))
                     queue.detected.put(face_gray)
-                    #mp_drawing.draw_detection(frame, detection) DA ERROR AL IGUAL QUE UN IMSHOW
+                    mp_drawing.draw_detection(frame, detection) 
                 queue.show_queue.put(frame)
             else:
                 print("cara no detectada------")
@@ -68,6 +70,7 @@ def namesToDictionary(path):
     names_labels = {}
     contador = 1
 
+    print("𝙻𝚘𝚊𝚍𝚒𝚗𝚐: nombres de empleados como labels para el modelo")
     for item in os.listdir(path):
         full_path = os.path.join(path, item)
 

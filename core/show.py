@@ -1,4 +1,4 @@
-from core.queues.queue_class import show_queue 
+from core.queues.colas import show_queue 
 import cv2
 
 # def show_video_run():

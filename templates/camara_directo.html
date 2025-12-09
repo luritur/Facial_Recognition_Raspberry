@@ -174,7 +174,7 @@
 <div class="camera-container">
     <div class="video-wrapper">
         <!-- Stream de video -->
-        <img id="videoFeed" class="video-feed" src="{{ url_for('video.recognition_video_feed') }}" alt="Cámara en vivo">
+        <img id="videoFeed" class="video-feed" src="{{ url_for('video.video_feed') }}" alt="Cámara en vivo">
 
         <!-- Placeholder cuando no hay cámara -->
         <div class="no-camera" id="noCamera" style="display: none;">
@@ -288,7 +288,7 @@ function startRecognition() {
   }
 
   function stopRecognition() {
-      fetch('api/api/endrecognition', { method: 'POST' })
+      fetch('api/api/stoprecognition', { method: 'POST' })
           .then(response => response.json())
           .then(data => console.log(data))
           .catch(err => console.error(err));

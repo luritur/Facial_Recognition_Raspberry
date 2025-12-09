@@ -11,8 +11,11 @@ detected = queue.Queue(maxsize=100)
 show_queue = queue.Queue(maxsize=1) #maxsize = 1 porque mostramos el ultimo frame
 
 
-#stop_detection = threading.Event()
-#stop_recognition = threading.Event()
-
-# ✅ Lock para proteger el acceso al modelo durante re-entrenamiento
-#model_lock = threading.Lock()
+def clear_queues():
+    """Vacía todas las colas de forma segura."""
+    for q in (frames, detected, show_queue):
+        while not q.empty():
+            try:
+                q.get_nowait()
+            except queue.Empty:
+                break

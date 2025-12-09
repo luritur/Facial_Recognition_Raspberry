@@ -1,15 +1,11 @@
 from flask import Blueprint, jsonify, request
 
-import threading
 
 
 # Importar módulos de tu código existente
-import core.camera.camera as camera
-import core.queues.queue_class as queue
-import core.recognition.train_LBPH as train
 from core.main import ejecutar_run
 from core.main import ejecutar_registro
-
+from core.main import detener_run
 
 # Variables globales para gestión de estado
 registro_activo = False
@@ -37,7 +33,7 @@ def detectar_start():
 
 @api_bp.route('/api/stoprecognition', methods=['POST'])
 def detectar_stop():
-    #implementar en el main: detener_run()
+    detener_run()
     return jsonify({
         "status": "ok",
         "message": "Reconocimiento detenido"
