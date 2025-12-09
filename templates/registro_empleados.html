@@ -347,6 +347,37 @@
         border: 1px solid #f5c6cb;
     }
     
+    /* Contador de captura */
+    .capture-timer {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(52, 152, 219, 0.95);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: bold;
+        animation: timerPulse 1s infinite;
+    }
+    
+    @keyframes timerPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .timer-icon {
+        font-size: 1.5rem;
+    }
+    
+    .timer-text {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+    
     /* Footer con botones */
     .modal-footer-custom {
         padding: 20px 25px;
@@ -485,8 +516,11 @@
                     </div>
                 </div>
                 <div class="info-text">
-                    ℹ️ En el siguiente paso, la cámara capturará automáticamente tu rostro durante <strong>3 segundos</strong>. 
+                    ℹ️ En el siguiente paso, la cámara capturará automáticamente tu rostro durante <strong>8 segundos</strong>. 
                     Asegúrate de estar bien iluminado y mirando directamente a la cámara.
+                    <br>
+                    <strong>⚠️ RECOMENDABLE:</strong> para que el sistema registre mejor tu cara, primero mira fijamente a la cámara y después vete moviendo la cara en círculos.
+
                 </div>
             </div>
 
@@ -498,11 +532,21 @@
                     <!-- Los mensajes aparecerán aquí -->
                 </div>
                 
+                <div style="position: relative;">
                     <div class="camera-preview" id="cameraPreview">
-                        <img id="videoFeed" src="{{ url_for('video.register_video_feed') }}" alt="Cámara" class="video-feed">
+                        <img id="videoFeed" class="video-feed" src="{{ url_for('video.video_feed') }}" alt="Cámara en vivo">
                         <div class="camera-placeholder" style="display: none;">📹 Cámara lista</div>
                         <div id="countdown" class="countdown" style="display: none;">3</div>
                     </div>
+                    
+                    <!-- Contador de captura -->
+                    <div id="captureTimer" class="capture-timer" style="display: none;">
+                        <div class="timer-icon">⏱️</div>
+                        <div class="timer-text">
+                            <span id="timerSeconds">8</span>s
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -553,6 +597,7 @@ function resetModal() {
     document.getElementById('captureStatus').innerHTML = '';
     document.getElementById('videoFeed').style.display = 'none';
     document.getElementById('countdown').style.display = 'none';
+    document.getElementById('captureTimer').style.display = 'none';
     document.querySelector('.camera-placeholder').style.display = 'flex';
     captureInProgress = false;
 }
@@ -682,6 +727,24 @@ function actualCapture(nombre, dni) {
     document.getElementById('captureStatus').innerHTML = 
         '<div class="alert alert-info">📸 Capturando rostro... Mantén la mirada fija en la cámara</div>';
     
+    // Mostrar y animar el contador de 8 segundos
+    const captureTimerEl = document.getElementById('captureTimer');
+    const timerSecondsEl = document.getElementById('timerSeconds');
+    captureTimerEl.style.display = 'flex';
+    
+    let timeLeft = 8;
+    timerSecondsEl.textContent = timeLeft;
+    
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft > 0) {
+            timerSecondsEl.textContent = timeLeft;
+        } else {
+            clearInterval(timerInterval);
+            captureTimerEl.style.display = 'none';
+        }
+    }, 1000);
+    
     // Llamar a la API de registro
     fetch('/api/api/registrar', {
         method: 'POST',
@@ -696,6 +759,8 @@ function actualCapture(nombre, dni) {
     })
     .then(response => response.json())
     .then(data => {
+        clearInterval(timerInterval);
+        captureTimerEl.style.display = 'none';
         document.getElementById('countdown').style.display = 'none';
         
         if (data.status === 'ok') {
@@ -710,6 +775,8 @@ function actualCapture(nombre, dni) {
         }
     })
     .catch(error => {
+        clearInterval(timerInterval);
+        captureTimerEl.style.display = 'none';
         document.getElementById('countdown').style.display = 'none';
         document.getElementById('captureStatus').innerHTML = 
             '<div class="alert alert-error">❌ Error: ' + error.message + '</div>';

@@ -3,8 +3,8 @@ import shutil
 import cv2
 import time
 import core.detection.detection as detection
-
-
+from core.control import stop_event
+from core.queues.colas import show_queue
 
 def borrar_contenido_carpeta(ruta):
     # Borra todo el contenido de la carpeta, incluyendo subcarpetas y archivos
@@ -38,7 +38,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
         return
     
     try:
-        print(f"run.py: captura iniciada durante {duracion} segundos")
+       # print(f"run.py: captura iniciada durante {duracion} segundos")
         inicio = time.time()
         frames_put=1
         consecutive_failures = 0
@@ -49,7 +49,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
             os.makedirs(carpeta_persona, exist_ok=True)
             minimo_una_cara_detectada = None
 
-            while time.time() - inicio < duracion:
+            while time.time() - inicio < duracion: 
                 ret, frame = cap.read()
                 if not ret or frame is None:
                     consecutive_failures += 1
@@ -66,6 +66,7 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                     continue
 
                 consecutive_failures = 0
+                show_queue.put(frame) #para mostrarlo en la web
                 if detection.boolean_face_detection(frame): #guardamos solo las fotos que tienen cara
                     ruta = os.path.join(carpeta_persona, f"{frames_put}.jpg")
                     cv2.imwrite(ruta, frame)
@@ -85,7 +86,10 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
             #     os.makedirs(path, exist_ok=True)
 
             #os.makedirs(path, exist_ok=True)
-            while time.time() - inicio < duracion: #x segundos de while (se pasa como parametro)
+            while True: #time.time() - inicio < duracion
+                if stop_event.is_set():
+                    print("🛑 Cámara detenido por señal")
+                    break
                 ret, frame = cap.read()
                 if not ret or frame is None:
                     consecutive_failures += 1
