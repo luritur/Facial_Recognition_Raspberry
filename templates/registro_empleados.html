@@ -559,7 +559,7 @@
                     </div>
                 </div>
                 <div class="info-text">
-                    ℹ️ En el siguiente paso, la cámara capturará automáticamente tu rostro durante <strong>8 segundos</strong>. 
+                    ℹ️ En el siguiente paso, la cámara capturará automáticamente tu rostro durante <strong>4 segundos</strong>. 
                     Asegúrate de estar bien iluminado y mirando directamente a la cámara.
                     <br>
                     <strong>⚠️ RECOMENDABLE:</strong> para que el sistema registre mejor tu cara, primero mira fijamente a la cámara y después vete moviendo la cara en círculos.
@@ -782,7 +782,7 @@ function actualCapture(nombre, dni) {
     const timerSecondsEl = document.getElementById('timerSeconds');
     captureTimerEl.style.display = 'flex';
     
-    let timeLeft = 8;
+    let timeLeft = 4;
     timerSecondsEl.textContent = timeLeft;
     
     const timerInterval = setInterval(() => {
