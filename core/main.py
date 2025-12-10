@@ -144,20 +144,20 @@ def run_recognition_thread(recognizer, names_labels):
 
 
 
-def run_entrenar_modelo_thread(nombre_empleado):
+def run_entrenar_modelo_thread():
 
     if control.entrenando_modelo: 
         print("Entrenamiento ya en curso, no inicie otro")
         return 
     
     control.entrenando_modelo = True
-    t_entrenar_modelo = threading.Thread(target=train_model,args=(nombre_empleado,),daemon=True)
+    t_entrenar_modelo = threading.Thread(target=train_model,daemon=True)
     t_entrenar_modelo.start()
     hilos_activos.append(t_entrenar_modelo)
 
         
 
-def train_model(nombre_empleado):
+def train_model():
     global recognizer, names_labels
     print("🔄 Entrenando modelo...")
     
@@ -168,7 +168,8 @@ def train_model(nombre_empleado):
     names_labels = detection.namesToDictionary(PATH_REGISTER) 
     control.entrenando_modelo = False
 
-    print(f"MODELO ENTRENADO CON EL NUEVO EMPLEADO: {nombre_empleado}")
+    print(f"MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {names_labels}")
+    print("=== REGISTRO COMPLETADO ===\n")
 
 
 en_ejecucion = False
@@ -193,9 +194,7 @@ def ejecutar_registro(nombre_empleado):
     
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
-    run_entrenar_modelo_thread(nombre_empleado)
 
-    print("=== REGISTRO COMPLETADO ===\n")
     en_ejecucion = False
 
 def ejecutar_run():
