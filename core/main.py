@@ -13,6 +13,7 @@ import core.recognition.recognition as recognition
 import core.camera.camera as camera
 import core.queues.colas as queue 
 import core.recognition.train_LBPH as train
+from core.gestion_empleados.gestion import reconocer_empleado, registrar_empleado
 
 from core.control import hilos_activos
 from core.control import stop_event
@@ -187,11 +188,17 @@ def ejecutar_registro(nombre_empleado):
     stop_event.clear()
     
     rc = run_camera_thread(frames, 4, PATH_REGISTER, nombre_empleado)
+<<<<<<< HEAD
     while rc.is_alive():
         time.sleep(0.1)
         if registro_cancelado:
             break
     print(registro_cancelado)
+=======
+    rc.join() 
+
+    
+>>>>>>> ef4594fd578610e2ce5c5659810d506453c340a1
     persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
     if registro_cancelado:
         print(f"⛔ Registro cancelado: borrando carpeta {persona_path}")
@@ -212,9 +219,15 @@ def ejecutar_registro(nombre_empleado):
         en_ejecucion = False
         return 
     
+    registrar_empleado(nombre_empleado) # de momento lo voy a hacer con nombre pero mejor hacerlo con ID
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
+<<<<<<< HEAD
     detener_run()
+=======
+    
+
+>>>>>>> ef4594fd578610e2ce5c5659810d506453c340a1
     en_ejecucion = False
     registro_cancelado = False  # Reset final
 

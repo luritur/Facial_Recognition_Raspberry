@@ -7,6 +7,11 @@ from core.main import ejecutar_run
 from core.main import ejecutar_registro
 from core.main import detener_run, detener_run_registro
 from core.main import run_entrenar_modelo_thread
+<<<<<<< HEAD
+=======
+from core.gestion_empleados.gestion import registrar_empleado, reconocer_empleado
+
+>>>>>>> ef4594fd578610e2ce5c5659810d506453c340a1
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
@@ -126,3 +131,5 @@ def api_entrenarModelo():
         'status': 'ok',
         'message': 'Modelo Entrenado'
     })
+
+

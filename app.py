@@ -1,5 +1,6 @@
 import os
-from web import create_app
+from web import create_app, socketio
+import core.gestion_empleados.gestion as gestion
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -12,6 +13,8 @@ PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 app = create_app()
 
 
+gestion.socketio = socketio
+
 if __name__ == '__main__':
     print("=" * 60)
     print("🚀 Iniciando Servidor Flask - Sistema de Reconocimiento Facial")
@@ -19,8 +22,13 @@ if __name__ == '__main__':
     print(f"📍 Acceso local: http://localhost:8000")
     print(f"📍 Acceso red:   http://[IP_RASPBERRY]:8000")
     print("=" * 60)
-    
-    # Crear carpetas necesarias si no existen
+
     os.makedirs(PATH_REGISTER, exist_ok=True)
+<<<<<<< HEAD
+
+    # ⚡ Aquí usamos socketio.run() en lugar de app.run()
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+=======
     
     app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)  #importante debug=False para no recargar el modelo cada vez
+>>>>>>> 925384fb923fa96fcd1fff4f5be5013cd0f59c6e
