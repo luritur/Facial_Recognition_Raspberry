@@ -6,11 +6,14 @@ from flask import Blueprint, jsonify, request
 from core.main import ejecutar_run
 from core.main import ejecutar_registro
 from core.main import detener_run
+from core.main import run_entrenar_modelo_thread
 
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
 employees_data = []  # Lista temporal de empleados (luego la sacarías de una BD o archivo)
+
+
 
 # Rutas de configuración
 #PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -111,4 +114,16 @@ def api_registrar_stop():
     return jsonify({
         'status': 'ok',
         'message': 'Registro detenido'
+    })
+
+
+
+@api_bp.route('/api/entrenarModelo', methods=['POST'])
+def api_entrenarModelo():
+    
+    run_entrenar_modelo_thread()
+
+    return jsonify({
+        'status': 'ok',
+        'message': 'Modelo Entrenado'
     })

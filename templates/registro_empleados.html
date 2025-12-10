@@ -421,18 +421,60 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    /* Contenedor del badge + botón */
+    .header-buttons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* Botón pequeño estilo header */
+    .entrenar-modelo-btn{
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        border: none;
+        font-size: 1.3rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(52,152,219,0.3);
+        transition: transform 0.2s ease;
+    }
+
+    .entrenar-modelo-btn:hover {
+        transform: scale(1.1);
+    }
+
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="header-section">
     <h2>Registro de Empleados</h2>
-    <div>
+
+    <div class="header-buttons">
         <span class="badge bg-secondary" style="padding: 8px 15px; font-size: 0.9rem;">
             Total: {{ employees|length if employees else 0 }} empleados
         </span>
+
+        <button class="entrenar-modelo-btn" onclick="entrenarModelo()">🤖</button>
     </div>
 </div>
+
+
 
 <div class="employees-grid">
     {% if employees %}
@@ -471,6 +513,7 @@
 
 <!-- Botón flotante -->
 <button class="add-employee-btn" onclick="openModal()">+</button>
+
 
 <!-- Modal de registro paso a paso -->
 <div class="modal-overlay" id="addEmployeeModal">
@@ -576,6 +619,13 @@ let captureInProgress = false;
 function openModal() {
     document.getElementById('addEmployeeModal').classList.add('show');
     resetModal();
+}
+
+function entrenarModelo(){
+    fetch('api/api/entrenarModelo', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch(err => console.error(err));  
 }
 
 function closeModal() {
