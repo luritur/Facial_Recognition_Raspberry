@@ -122,7 +122,6 @@
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="header-section">
     <h2>Empleados</h2>
@@ -143,58 +142,187 @@
 </div>
 
 <div class="employee-table">
-    <table class="table">
-        <thead>
+    <table id="tablaEmpleados" class="table table-bordered table-striped">
+        <thead class="table-dark">
             <tr>
-                <th></th>
-                <th>Empleado</th>
+                <th>Nombre Empleado</th>
+                <th>Email</th>
+                <th>Jornada (horas)</th>
+                <th>Progreso</th>
                 <th>Estado</th>
-                <th>Jornada</th>
-                <th>Horas hoy</th>
-                <th>% Computado</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
-            {% for employee in employees %}
             <tr>
-                <td>
-                    <input type="checkbox">
-                </td>
-                <td>
-                    <div class="employee-info">
-                        <img src="{{ employee.avatar }}" alt="{{ employee.name }}" class="employee-avatar">
-                        <span class="employee-name">{{ employee.name }}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge status-online">Online</span>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.jornada }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width: progreso"></div>
-                    </div>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.horas_hoy }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width: progreso"></div>
-                    </div>
-                </td>
-                <td>
-                    <span class="task-badge">{{ employee.tareas }} tarea{% if employee.tareas != 1 %}s{% endif %}</span>
-                    <div class="completion-text mt-1">{{ employee.computado }}%</div>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.hora }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width:progreso"></div>
-                    </div>
-                </td>
+                <td colspan="5" class="text-center text-muted">Cargando empleados...</td>
             </tr>
-            {% endfor %}
         </tbody>
     </table>
-</div>
+</div><script>
+let versionActual = 0;
+let esperandoCambios = false;
+
+// Función para limpiar la fila vacía
+function limpiarFilaVacia() {
+    const tbody = document.querySelector("#tablaEmpleados tbody");
+    if (tbody && tbody.children.length === 1 &&
+        tbody.children[0].children[0] &&
+        tbody.children[0].children[0].colSpan === 5) {
+        tbody.innerHTML = "";
+    }
+}
+
+// Función para agregar un empleado NUEVO
+function agregarEmpleado(nombre, email, jornada, horas, estado) {
+    console.log(`[UI] ➕ Agregando empleado: ${nombre}`);
+    limpiarFilaVacia();
+    const tbody = document.querySelector("#tablaEmpleados tbody");
+    if (!tbody) {
+        console.error('[UI] ❌ No se encontró tbody');
+        return;
+    }
+
+    const fila = document.createElement("tr");
+    fila.setAttribute('data-email', email);
+    
+    const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
+    
+    const colores = {
+        "trabajando": "yellow",
+        "no_entro": "red",
+        "completado": "green"
+    };
+    const color = colores[estado] || "gray";
+
+    fila.innerHTML = `
+        <td>${nombre}</td>
+        <td>${email}</td>
+        <td>${jornada}</td>
+        <td>
+            <div style="width:100%; background:#e5e5e5; border-radius:6px;">
+                <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
+            </div>
+            <small>${horas}/${jornada} h</small>
+        </td>
+        <td><span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span></td>
+    `;
+    tbody.appendChild(fila);
+    console.log(`[UI] ✅ Empleado agregado a la tabla: ${nombre}`);
+}
+
+// Función para actualizar un empleado EXISTENTE
+function actualizarEmpleado(email, horas, estado) {
+    console.log(`[UI] 🔄 Actualizando empleado: ${email}`);
+    const fila = document.querySelector(`tr[data-email="${email}"]`);
+    if (!fila) {
+        console.warn(`[UI] ⚠️ Empleado ${email} no encontrado en tabla`);
+        return;
+    }
+
+    const jornada = parseFloat(fila.cells[2].textContent);
+    const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
+    
+    fila.cells[3].innerHTML = `
+        <div style="width:100%; background:#e5e5e5; border-radius:6px;">
+            <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
+        </div>
+        <small>${horas}/${jornada} h</small>
+    `;
+    
+    const colores = {
+        "trabajando": "yellow",
+        "no_entro": "red",
+        "completado": "green"
+    };
+    const color = colores[estado] || "gray";
+    
+    fila.cells[4].innerHTML = `<span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span>`;
+    
+    console.log(`[UI] ✅ Empleado actualizado: ${email} - ${horas}h - ${estado}`);
+}
+
+// Cargar TODOS los empleados al inicio
+async function cargarEmpleadosInicial() {
+    console.log('[CLIENTE] 🚀 Cargando empleados iniciales...');
+    try {
+        const response = await fetch('/api/empleados');
+        const data = await response.json();
+        
+        console.log('[CLIENTE] 📦 Datos recibidos:', data);
+        
+        if (data.success) {
+            const tbody = document.querySelector("#tablaEmpleados tbody");
+            tbody.innerHTML = '';
+            
+            if (data.empleados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No hay empleados registrados aún...</td>
+                    </tr>
+                `;
+            } else {
+                data.empleados.forEach(emp => {
+                    agregarEmpleado(emp.nombre, emp.email, emp.jornada, emp.horas, emp.estado);
+                });
+            }
+            
+            versionActual = data.version;
+            console.log(`[CLIENTE] ✅ Empleados iniciales cargados. Versión: ${versionActual}`);
+            
+            // Iniciar long polling
+            console.log('[CLIENTE] 🔄 Iniciando long polling...');
+            esperarCambios();
+        }
+    } catch (error) {
+        console.error('[CLIENTE] ❌ Error al cargar empleados:', error);
+        setTimeout(cargarEmpleadosInicial, 3000);
+    }
+}
+
+// Long polling: esperar cambios
+async function esperarCambios() {
+    if (esperandoCambios) {
+        console.warn('[CLIENTE] ⚠️ Ya hay una petición activa');
+        return;
+    }
+    esperandoCambios = true;
+    
+    console.log(`[CLIENTE] 📡 Esperando cambios... (versión: ${versionActual})`);
+    
+    try {
+        const response = await fetch(`/api/empleados/esperar-cambios?version=${versionActual}`);
+        const data = await response.json();
+        
+        console.log('[CLIENTE] 📦 Respuesta recibida:', data);
+        
+        if (data.success && data.cambio) {
+            console.log(`[CLIENTE] 🔔 ¡Cambio detectado! Tipo: ${data.tipo}`, data.empleado);
+            
+            versionActual = data.version;
+            
+            // Procesar según el tipo de cambio
+            if (data.tipo === 'nuevo') {
+                const emp = data.empleado;
+                agregarEmpleado(emp.nombre, emp.email, emp.jornada, emp.horas, emp.estado);
+            } else if (data.tipo === 'actualizado') {
+                const emp = data.empleado;
+                actualizarEmpleado(emp.email, emp.horas, emp.estado);
+            }
+        } else {
+            console.log('[CLIENTE] ⏰ Sin cambios (timeout)');
+        }
+    } catch (error) {
+        console.error('[CLIENTE] ❌ Error en long polling:', error);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+    } finally {
+        esperandoCambios = false;
+        // Volver a esperar cambios
+        setTimeout(() => esperarCambios(), 100);
+    }
+}
+
+// Iniciar al cargar la página
+console.log('[CLIENTE] 🎬 Iniciando dashboard...');
+cargarEmpleadosInicial();
+</script>
 {% endblock %}

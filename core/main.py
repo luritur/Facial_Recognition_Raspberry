@@ -16,6 +16,8 @@ import core.recognition.train_LBPH as train
 from core.control import hilos_activos
 from core.control import stop_event
 import core.control as control
+
+from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -192,6 +194,10 @@ def ejecutar_registro(nombre_empleado):
         en_ejecucion = False
         return 
     
+    print("llamando a notificar_empleado")
+    notificar_nuevo_empleado(nombre_empleado, "prueba@gmail.com", 8, horas=0, estado='no_entro')
+    print("llamada a notificar_empleado HECHAAA")
+
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
 
