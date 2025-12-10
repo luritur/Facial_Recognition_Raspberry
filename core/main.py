@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import sys
 import platform
+import shutil
 
 import core.show as show
 import core.detection.detection as detection
@@ -57,7 +58,7 @@ else:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, PROJECT_ROOT)
-
+registro_cancelado=False
 
 
 # ========================================
@@ -175,18 +176,37 @@ def train_model():
 en_ejecucion = False
 
 def ejecutar_registro(nombre_empleado):
-    global en_ejecucion, recognizer, names_labels
+    global en_ejecucion, recognizer, names_labels, registro_cancelado
 
     if en_ejecucion:
         print("⚠️ Ya hay una acción en ejecución.")
         return
     
     en_ejecucion = True
+    registro_cancelado=False
+    stop_event.clear()
     
     rc = run_camera_thread(frames, 4, PATH_REGISTER, nombre_empleado)
-    rc.join() 
-    
+    while rc.is_alive():
+        time.sleep(0.1)
+        if registro_cancelado:
+            break
+    print(registro_cancelado)
     persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
+    if registro_cancelado:
+        print(f"⛔ Registro cancelado: borrando carpeta {persona_path}")
+        if os.path.exists(persona_path):
+            try:
+                shutil.rmtree(persona_path)
+                print("🗑 Carpeta borrada correctamente")
+            except Exception as e:
+                print(f"⚠️ Error al borrar carpeta: {e}")
+
+        en_ejecucion = False
+        registro_cancelado = False  # reset
+        return
+
+    
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
         en_ejecucion = False
@@ -194,8 +214,9 @@ def ejecutar_registro(nombre_empleado):
     
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
-
+    detener_run()
     en_ejecucion = False
+    registro_cancelado = False  # Reset final
 
 def ejecutar_run():
     global en_ejecucion, recognizer, names_labels
@@ -221,7 +242,8 @@ def ejecutar_run():
     print("\n=== RUN COMPLETADO ===\n")
 
 def detener_run():
-    global hilos_activos, en_ejecucion
+    global hilos_activos, en_ejecucion, registro_cancelado
+    registro_cancelado=True
     stop_event.set() #activamos el flag para parar los hilos (camara, deteccion y reconocimiento)
     for t in hilos_activos: 
         t.join()       # Espera a que cada hilo termine correctamente
@@ -234,6 +256,10 @@ def detener_run():
         
 
     print("✅ Reconocimiento detenido de forma segura")
+
+def detener_run_registro():
+    global registro_cancelado
+    registro_cancelado=True
 # ========================================
 # ASIGNAR CALLBACKS
 # ========================================

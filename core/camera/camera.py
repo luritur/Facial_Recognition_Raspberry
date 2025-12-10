@@ -50,6 +50,15 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
             minimo_una_cara_detectada = None
 
             while time.time() - inicio < duracion: 
+                if stop_event.is_set():
+                    print("🛑 Cámara detenida por señal")
+                    if os.path.exists(carpeta_persona):
+                        try:
+                            shutil.rmtree(carpeta_persona)
+                            print(f"Carpeta borrada: {carpeta_persona}")
+                        except Exception as e:
+                            print(f"⚠️ Error al borrar carpeta: {e}")
+                    break
                 ret, frame = cap.read()
                 if not ret or frame is None:
                     consecutive_failures += 1

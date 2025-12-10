@@ -5,9 +5,8 @@ from flask import Blueprint, jsonify, request
 # Importar módulos de tu código existente
 from core.main import ejecutar_run
 from core.main import ejecutar_registro
-from core.main import detener_run
+from core.main import detener_run, detener_run_registro
 from core.main import run_entrenar_modelo_thread
-
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
@@ -108,7 +107,7 @@ def api_registrar():
 def api_registrar_stop():
     """Detiene el proceso de registro (si es necesario)"""
     global registro_activo
-    
+    detener_run_registro()
     registro_activo = False
     
     return jsonify({
