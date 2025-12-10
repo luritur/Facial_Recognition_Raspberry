@@ -12,6 +12,7 @@ import core.recognition.recognition as recognition
 import core.camera.camera as camera
 import core.queues.colas as queue 
 import core.recognition.train_LBPH as train
+from core.gestion_empleados.gestion import reconocer_empleado, registrar_empleado
 
 from core.control import hilos_activos
 from core.control import stop_event
@@ -185,6 +186,7 @@ def ejecutar_registro(nombre_empleado):
     
     rc = run_camera_thread(frames, 8, PATH_REGISTER, nombre_empleado)
     rc.join() 
+
     
     persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
@@ -192,8 +194,10 @@ def ejecutar_registro(nombre_empleado):
         en_ejecucion = False
         return 
     
+    registrar_empleado(nombre_empleado) # de momento lo voy a hacer con nombre pero mejor hacerlo con ID
     num_fotos = len(os.listdir(persona_path)) 
     print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
+    
 
     en_ejecucion = False
 

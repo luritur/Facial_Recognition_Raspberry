@@ -143,58 +143,98 @@
 </div>
 
 <div class="employee-table">
-    <table class="table">
-        <thead>
+    <!-- Tabla -->
+    <table id="tablaEmpleados" class="table table-bordered table-striped">
+        <thead class="table-dark">
             <tr>
-                <th></th>
-                <th>Empleado</th>
+                <th>Nombre Empleado</th>
+                <th>Email</th>
+                <th>Jornada (horas)</th>
+                <th>Progreso</th>
                 <th>Estado</th>
-                <th>Jornada</th>
-                <th>Horas hoy</th>
-                <th>% Computado</th>
-                <th></th>
             </tr>
         </thead>
+
         <tbody>
-            {% for employee in employees %}
+            <!-- Fila vacía estática -->
             <tr>
-                <td>
-                    <input type="checkbox">
-                </td>
-                <td>
-                    <div class="employee-info">
-                        <img src="{{ employee.avatar }}" alt="{{ employee.name }}" class="employee-avatar">
-                        <span class="employee-name">{{ employee.name }}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="status-badge status-online">Online</span>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.jornada }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width: progreso"></div>
-                    </div>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.horas_hoy }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width: progreso"></div>
-                    </div>
-                </td>
-                <td>
-                    <span class="task-badge">{{ employee.tareas }} tarea{% if employee.tareas != 1 %}s{% endif %}</span>
-                    <div class="completion-text mt-1">{{ employee.computado }}%</div>
-                </td>
-                <td>
-                    <div class="time-display">{{ employee.hora }}</div>
-                    <div class="progress-bar-custom mt-2">
-                        <div class="progress-fill" style="width:progreso"></div>
-                    </div>
-                </td>
+                <td colspan="5" class="text-center text-muted">No hay empleados registrados aún...</td>
             </tr>
-            {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+const socket = io("http://localhost:8000");
+
+// Función para limpiar la fila vacía
+function limpiarFilaVacia() {
+    const tbody = document.querySelector("#tablaEmpleados tbody");
+    if (tbody.children.length === 1 &&
+        tbody.children[0].children[0].colSpan === 5) {
+        tbody.innerHTML = "";
+    }
+}
+
+// Función para agregar un empleado
+function agregarEmpleado(nombre, email, jornada, horas, estado) {
+    limpiarFilaVacia();
+    const tbody = document.querySelector("#tablaEmpleados tbody");
+    const fila = document.createElement("tr");
+
+    const progreso = Math.min((horas / jornada) * 100, 100);
+    let color = "gray";
+    if (estado === "trabajando") color = "yellow";
+    if (estado === "no_entro") color = "red";
+    if (estado === "completado") color = "green";
+
+    fila.innerHTML = `
+        <td>${nombre}</td>
+        <td>${email}</td>
+        <td>${jornada}</td>
+        <td>
+            <div style="width:100%; background:#e5e5e5; border-radius:6px;">
+                <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
+            </div>
+            <small>${horas}/${jornada} h</small>
+        </td>
+        <td><span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span></td>
+    `;
+    tbody.appendChild(fila);
+}
+
+// Función para actualizar un empleado
+function actualizarEmpleado(email, horas, estado) {
+    const tbody = document.querySelector("#tablaEmpleados tbody");
+    for (let fila of tbody.rows) {
+        if (fila.cells[1].textContent === email) {
+            const jornada = parseFloat(fila.cells[2].textContent);
+            const progreso = Math.min((horas / jornada) * 100, 100);
+            fila.cells[3].innerHTML = `
+                <div style="width:100%; background:#e5e5e5; border-radius:6px;">
+                    <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
+                </div>
+                <small>${horas}/${jornada} h</small>
+            `;
+            let color = "gray";
+            if (estado === "trabajando") color = "yellow";
+            if (estado === "no_entro") color = "red";
+            if (estado === "completado") color = "green";
+            fila.cells[4].innerHTML = `<span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span>`;
+            break;
+        }
+    }
+}
+
+// SocketIO: eventos desde el backend
+socket.on('nuevo_empleado', data => {
+    agregarEmpleado(data.nombre, data.email, data.jornada, data.horas, data.estado);
+});
+
+socket.on('empleado_actualizado', data => {
+    actualizarEmpleado(data.email, data.horas, data.estado);
+});
+</script>
 {% endblock %}
+
