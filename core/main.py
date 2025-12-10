@@ -182,7 +182,7 @@ def ejecutar_registro(nombre_empleado):
     
     en_ejecucion = True
     
-    rc = run_camera_thread(frames, 8, PATH_REGISTER, nombre_empleado)
+    rc = run_camera_thread(frames, 4, PATH_REGISTER, nombre_empleado)
     rc.join() 
     
     persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
@@ -249,9 +249,6 @@ try:
         print("\n✅ Sistema iniciado - Esperando botones físicos...")
         print("📌 BTN_REGISTRAR (GPIO 23) - Registrar nuevo usuario")
         print("📌 BTN_RUN (GPIO 24) - Iniciar reconocimiento")
-        print("Presiona Ctrl+C para salir\n")
-        while True:
-            time.sleep(0.1)
     else:
         print("\n✅ Sistema iniciado - Modo simulación Windows")
         print("="*50)
