@@ -24,11 +24,6 @@ if __name__ == '__main__':
     print("=" * 60)
 
     os.makedirs(PATH_REGISTER, exist_ok=True)
-<<<<<<< HEAD
 
     # ⚡ Aquí usamos socketio.run() en lugar de app.run()
     socketio.run(app, host='0.0.0.0', port=8000, debug=True)
-=======
-    
-    app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)  #importante debug=False para no recargar el modelo cada vez
->>>>>>> 925384fb923fa96fcd1fff4f5be5013cd0f59c6e
