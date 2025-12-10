@@ -1,6 +1,8 @@
 import os
 from web import create_app, socketio
 import core.gestion_empleados.gestion as gestion
+import eventlet
+eventlet.monkey_patch()
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -26,4 +28,4 @@ if __name__ == '__main__':
     os.makedirs(PATH_REGISTER, exist_ok=True)
 
     # ⚡ Aquí usamos socketio.run() en lugar de app.run()
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True, use_reloader=False)

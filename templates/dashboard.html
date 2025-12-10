@@ -164,9 +164,11 @@
     </table>
 </div>
 
-<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
-const socket = io("http://localhost:8000");
+
+const socket = io();  
 
 // Función para limpiar la fila vacía
 function limpiarFilaVacia() {
@@ -227,12 +229,23 @@ function actualizarEmpleado(email, horas, estado) {
     }
 }
 
+
+socket.on("connect", () => {
+    console.log("✅ Conectado al servidor Socket.IO!");
+});
+socket.on("disconnect", () => {
+    console.log("❌ Desconectado del servidor!");
+});
+
+
 // SocketIO: eventos desde el backend
-socket.on('nuevo_empleado', data => {
+socket.on('nuevo_empleado', (data) => {
+    console.log('🆕 [EVENTO] "nuevo_empleado" recibido:', data);
     agregarEmpleado(data.nombre, data.email, data.jornada, data.horas, data.estado);
 });
 
-socket.on('empleado_actualizado', data => {
+socket.on('empleado_actualizado', (data) => {
+    console.log('♻️ [EVENTO] "empleado_actualizado" recibido:', data);
     actualizarEmpleado(data.email, data.horas, data.estado);
 });
 </script>
