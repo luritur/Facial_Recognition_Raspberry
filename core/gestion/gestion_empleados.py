@@ -1,8 +1,11 @@
-#una funcion que devuelva todos los empleados con sus datos cargados de la BD (se va a usar en api_routes)
 import threading
 
+# Variables globales para notificar cambios
+empleados_version = 0
+empleados_lock = threading.Lock()
+ultimo_cambio = None
 
-#para probar: 
+# Lista de empleados (empieza vacía o con datos de prueba)
 empleados_prueba = [
     {
         'nombre': 'Pepito Grillo',
@@ -42,22 +45,43 @@ empleados_prueba = [
 ]
 
 def get_empleados_registrados():
-    return empleados_prueba
+    """Devuelve la lista completa de empleados"""
+    with empleados_lock:
+        return empleados_prueba.copy()
 
 
-# Variables globales para notificar cambios
-empleados_version = 0
-empleados_lock = threading.Lock()
-ultimo_cambio = None  # Guardamos el último cambio aquí
+def agregar_empleado_a_lista(nombre, email, jornada, horas=0, estado='no_entro'):
+    """Agrega el empleado a la lista interna"""
+    global empleados_prueba
+    
+    with empleados_lock:
+        # Verificar si ya existe
+        existe = any(emp['nombre'] == email for emp in empleados_prueba) #cambiarlo por el DNI
+        if not existe:
+            empleados_prueba.append({
+                'nombre': nombre,
+                'email': email,
+                'jornada': jornada,
+                'horas': horas,
+                'estado': estado
+            })
+            print(f"[GESTION] ➕ Empleado {nombre} agregado a la lista")
+        else:
+            print(f"[GESTION] ⚠️ Empleado {email} ya existe")
+
 
 def notificar_nuevo_empleado(nombre, email, jornada, horas=0, estado='no_entro'):
     """Llama esto cuando REGISTRES un empleado nuevo"""
     global empleados_version, ultimo_cambio
     
     print(f"[NOTIFICACION] 🔔 Iniciando notificación para: {nombre}")
-    print(f"[NOTIFICACION] 📊 Versión anterior: {empleados_version}")
     
+    # PRIMERO: Agregar a la lista
+    agregar_empleado_a_lista(nombre, email, jornada, horas, estado)
+    
+    # SEGUNDO: Notificar el cambio
     with empleados_lock:
+        version_anterior = empleados_version
         empleados_version += 1
         ultimo_cambio = {
             'tipo': 'nuevo',
@@ -69,16 +93,26 @@ def notificar_nuevo_empleado(nombre, email, jornada, horas=0, estado='no_entro')
                 'estado': estado
             }
         }
-        print(f"[NOTIFICACION] 📊 Nueva versión: {empleados_version}")
+        print(f"[NOTIFICACION] 📊 Versión: {version_anterior} → {empleados_version}")
         print(f"[NOTIFICACION] 📦 Ultimo cambio: {ultimo_cambio}")
     
     print(f"[NOTIFICACION] ✅ Notificación completada para: {nombre}")
+
 
 def notificar_empleado_actualizado(email, horas, estado):
     """Llama esto cuando ACTUALICES las horas/estado de un empleado"""
     global empleados_version, ultimo_cambio
     
     with empleados_lock:
+        # Actualizar en la lista
+        for emp in empleados_prueba:
+            if emp['email'] == email:
+                emp['horas'] = horas
+                emp['estado'] = estado
+                print(f"[GESTION] 🔄 Empleado {email} actualizado: {horas}h, {estado}")
+                break
+        
+        # Notificar el cambio
         empleados_version += 1
         ultimo_cambio = {
             'tipo': 'actualizado',
@@ -88,4 +122,4 @@ def notificar_empleado_actualizado(email, horas, estado):
                 'estado': estado
             }
         }
-    print(f"🔔 Notificado actualización: {email} - {horas}h - {estado}")
+        print(f"[NOTIFICACION] 🔔 Notificado actualización: {email} - {horas}h - {estado}")
