@@ -49,7 +49,7 @@ def gen_frames():
         try:
             # Intentar obtener frame con timeout de 0.5 segundos
             # Si la cola está vacía, lanza excepción Empty
-            frame = show_queue.get(timeout=0.5)
+            frame = show_queue.get(timeout=0.05)
             ultimo_frame = frame
             sin_frames_contador = 0  # Resetear contador
             

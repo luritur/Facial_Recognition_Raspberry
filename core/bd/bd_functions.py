@@ -1,44 +1,32 @@
 # db.py
 
-from flask import Flask
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
+from core.bd.bd_create import Empleado
+from core.bd.db import db
 
-from app import app, db  # Importamos la app y SQLAlchemy ya inicializado
 
-# -------------------------
-# Modelo de Empleado
-# -------------------------
-class Empleado(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    jornada = db.Column(db.Integer, nullable=False)
-    horas = db.Column(db.Integer, default=0)
-    estado = db.Column(db.String(50), default='no_entro')
-
-    def __repr__(self):
-        return f"<Empleado {self.nombre}>"
-
-# -------------------------
-# Funciones CRUD
-# -------------------------
 def crear_base_datos():
     """Crea la base de datos y tablas si no existen"""
-    with app.app_context():
+    global app
+    with current_app.app_context():
         db.create_all()
         print("[DB] Base de datos creada")
 
-def agregar_empleado(nombre, email, jornada, horas=0, estado='no_entro'):
+def agregar_empleado(dni, nombre, email, jornada, path_image, horas=0, estado='out'):
     """Agrega un nuevo empleado a la DB"""
-    with app.app_context():
+
+    with current_app.app_context():
         existe = Empleado.query.filter_by(email=email).first()
         if existe:
             print(f"[DB] ⚠️ Empleado {email} ya existe")
             return
         nuevo = Empleado(
+            dni = dni,  
             nombre=nombre,
             email=email,
             jornada=jornada,
+            path_image = path_image, 
             horas=horas,
             estado=estado
         )
@@ -48,12 +36,25 @@ def agregar_empleado(nombre, email, jornada, horas=0, estado='no_entro'):
 
 def obtener_empleados():
     """Devuelve todos los empleados"""
-    with app.app_context():
+    with current_app.app_context():
         return Empleado.query.all()
+    
+
+def empleado_exist(dni):
+    """
+    Retorna True si el empleado existe, False si no.
+    """
+
+    with current_app.app_context():
+        # Busca el primer registro que coincida con el DNI
+        empleado = Empleado.query.filter_by(dni=dni).first()
+        
+        # Si empleado no es None, es que existe
+        return empleado is not None
 
 def actualizar_empleado(email, horas=None, estado=None):
     """Actualiza horas y/o estado de un empleado"""
-    with app.app_context():
+    with current_app.app_context():
         emp = Empleado.query.filter_by(email=email).first()
         if not emp:
             print(f"[DB] ⚠️ Empleado {email} no encontrado")
@@ -65,16 +66,16 @@ def actualizar_empleado(email, horas=None, estado=None):
         db.session.commit()
         print(f"[DB] 🔄 Empleado {email} actualizado")
 
-def borrar_empleado(email):
+def borrar_empleado(dni):
     """Elimina un empleado por email"""
-    with app.app_context():
-        emp = Empleado.query.filter_by(email=email).first()
+    with current_app.app_context():
+        emp = Empleado.query.filter_by(dni=dni).first()
         if not emp:
-            print(f"[DB] ⚠️ Empleado {email} no encontrado")
+            print(f"[DB] ⚠️ Empleado {dni} no encontrado")
             return
         db.session.delete(emp)
         db.session.commit()
-        print(f"[DB] ❌ Empleado {email} eliminado")
+        print(f"[DB] ❌ Empleado {dni} eliminado")
 
 
 # -------------------------
