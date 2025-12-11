@@ -1,5 +1,8 @@
 import os
 from web import create_app
+from config import Config
+from flask_sqlalchemy import SQLAlchemy
+ 
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -22,5 +25,10 @@ if __name__ == '__main__':
     
     # Crear carpetas necesarias si no existen
     os.makedirs(PATH_REGISTER, exist_ok=True)
-    
+    # Cargar configuración desde config.py
+    app.config.from_object(Config)
+
+    # Inicializar SQLAlchemy
+    db = SQLAlchemy(app)
+
     app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)
