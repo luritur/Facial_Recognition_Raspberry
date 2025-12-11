@@ -7,7 +7,7 @@ import core.queues.colas as queue
 import core.detection.detection as detection 
 from core.control import stop_event
 frames = queue.detected
-THRESHOLD = 70  # Ajusta segÃºn los resultados que veas
+THRESHOLD = 85  # Ajusta segun los resultados que veas
 
 
 
@@ -20,7 +20,7 @@ def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el 
         #reconocer el frame 
         face_gray = queue.detected.get() #tiene que leer de detected, no de frames
         # 2. Redimensionar para consistencia (IMPORTANTE)
-        face_resized = cv2.resize(face_gray, (100, 100))  # âœ… AÃ‘ADIDO
+        face_resized = cv2.resize(face_gray, (100, 100))  # âñADIDO
 
         # Recognize and label the faces
          # Recognize the face using the trained model
