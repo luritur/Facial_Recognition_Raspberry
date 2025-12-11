@@ -18,6 +18,8 @@ from core.control import stop_event
 import core.control as control
 
 from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
+
+from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados, borrar_empleado, empleado_exist
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -176,7 +178,7 @@ def train_model():
 
 en_ejecucion = False
 
-def ejecutar_registro(nombre_empleado):
+def ejecutar_registro(nombre_empleado, dni, email, jornada):
     global en_ejecucion, recognizer, names_labels
 
     if en_ejecucion:
@@ -193,9 +195,15 @@ def ejecutar_registro(nombre_empleado):
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
         en_ejecucion = False
         return 
+    if empleado_exist(dni): 
+        print("❌ EL EMPLEADO YA EXISTE")
+        en_ejecucion = False
+        return 
     
     print("llamando a notificar_empleado")
-    notificar_nuevo_empleado(nombre_empleado, "prueba@gmail.com", 8, horas=0, estado='no_entro')
+    notificar_nuevo_empleado(dni, nombre_empleado,email, jornada)
+    agregar_empleado(dni, nombre_empleado,email, jornada, persona_path)
+
     print("llamada a notificar_empleado HECHAAA")
 
     num_fotos = len(os.listdir(persona_path)) 

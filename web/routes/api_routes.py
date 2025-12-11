@@ -63,10 +63,14 @@ def api_registrar():
     
     try:
         data = request.get_json()
+        # Datos del formulario
         nombre = data.get('nombre', '').strip()
         dni = data.get('dni', '').strip()
-        duracion = data.get('duracion', 3)
+        email = data.get('email', '').strip()      # Nuevo campo
+        jornada = data.get('jornada', '').strip()  # Nuevo campo
         
+        # Configuración (si no viene, usa 3 por defecto)
+        duracion = data.get('duracion', 3)
         if not nombre or not dni:
             return jsonify({
                 'status': 'error',
@@ -83,9 +87,9 @@ def api_registrar():
         registro_activo = True
         
         try:
-            print(f"[API] Iniciando registro para: {nombre}")
+            print(f"[API] Iniciando registro para: {nombre}. DNI; {dni}")
                 
-            ejecutar_registro(nombre)
+            ejecutar_registro(nombre, dni, email, jornada)
 
             print(f"[API] Registro completado para: {nombre}")
                 

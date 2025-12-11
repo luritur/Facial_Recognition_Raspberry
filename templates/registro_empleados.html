@@ -253,6 +253,16 @@
         box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
     }
     
+    /* Select personalizado */
+    select.form-control {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 35px;
+        appearance: none;
+    }
+    
     /* Confirmación */
     .confirmation-box {
         background: #f8f9fa;
@@ -270,7 +280,7 @@
     .conf-label {
         font-weight: 600;
         color: #2c3e50;
-        min-width: 80px;
+        min-width: 100px;
     }
     .conf-value {
         color: #495057;
@@ -421,21 +431,18 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
-
     .header-section {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
     }
-
     /* Contenedor del badge + botón */
     .header-buttons {
         display: flex;
         align-items: center;
         gap: 12px;
     }
-
     /* Botón pequeño estilo header */
     .entrenar-modelo-btn{
         width: 40px;
@@ -452,29 +459,22 @@
         box-shadow: 0 4px 10px rgba(52,152,219,0.3);
         transition: transform 0.2s ease;
     }
-
     .entrenar-modelo-btn:hover {
         transform: scale(1.1);
     }
-
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="header-section">
     <h2>Registro de Empleados</h2>
-
     <div class="header-buttons">
         <span class="badge bg-secondary" style="padding: 8px 15px; font-size: 0.9rem;">
             Total: {{ employees|length if employees else 0 }} empleados
         </span>
-
         <button class="entrenar-modelo-btn" onclick="entrenarModelo()">🤖</button>
     </div>
 </div>
-
-
 
 <div class="employees-grid">
     {% if employees %}
@@ -511,11 +511,8 @@
     {% endif %}
 </div>
 
-<!-- Botón flotante -->
 <button class="add-employee-btn" onclick="openModal()">+</button>
 
-
-<!-- Modal de registro paso a paso -->
 <div class="modal-overlay" id="addEmployeeModal">
     <div class="modal-content-custom">
         <div class="modal-header-custom">
@@ -523,7 +520,6 @@
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         
-        <!-- Barra de progreso -->
         <div class="progress-container">
             <div class="progress-bar-custom">
                 <div class="progress-bar-fill" id="progressBar" style="width: 33%;"></div>
@@ -532,7 +528,6 @@
         </div>
         
         <div class="modal-body-custom">
-            <!-- PASO 1: Datos personales -->
             <div id="step1" class="step active">
                 <h4>📝 Datos del Empleado</h4>
                 <div class="form-group">
@@ -543,9 +538,20 @@
                     <label class="form-label">DNI/NIE *</label>
                     <input type="text" id="dni" class="form-control" placeholder="Ej: 12345678A" required>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input type="email" id="email" class="form-control" placeholder="Ej: juan.perez@empresa.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Jornada *</label>
+                    <select id="jornada" class="form-control" required>
+                        <option value="">Selecciona una jornada...</option>
+                        <option value="completa">Jornada Completa</option>
+                        <option value="parcial">Jornada Parcial</option>
+                        <option value="intensiva">Jornada Intensiva</option>
+                    </select>
+                </div>
             </div>
-
-            <!-- PASO 2: Confirmación -->
             <div id="step2" class="step">
                 <h4>✅ Confirma los datos</h4>
                 <div class="confirmation-box">
@@ -557,23 +563,27 @@
                         <span class="conf-label">DNI:</span>
                         <span class="conf-value" id="confirmDni">-</span>
                     </div>
+                    <div class="conf-row">
+                        <span class="conf-label">Email:</span>
+                        <span class="conf-value" id="confirmEmail">-</span>
+                    </div>
+                    <div class="conf-row">
+                        <span class="conf-label">Jornada:</span>
+                        <span class="conf-value" id="confirmJornada">-</span>
+                    </div>
                 </div>
                 <div class="info-text">
                     ℹ️ En el siguiente paso, la cámara capturará automáticamente tu rostro durante <strong>8 segundos</strong>. 
                     Asegúrate de estar bien iluminado y mirando directamente a la cámara.
                     <br>
                     <strong>⚠️ RECOMENDABLE:</strong> para que el sistema registre mejor tu cara, primero mira fijamente a la cámara y después vete moviendo la cara en círculos.
-
                 </div>
             </div>
-
-            <!-- PASO 3: Captura de rostro -->
             <div id="step3" class="step">
                 <h4>📸 Captura de Rostro</h4>
                 
                 <div id="captureStatus">
-                    <!-- Los mensajes aparecerán aquí -->
-                </div>
+                    </div>
                 
                 <div style="position: relative;">
                     <div class="camera-preview" id="cameraPreview">
@@ -582,7 +592,6 @@
                         <div id="countdown" class="countdown" style="display: none;">3</div>
                     </div>
                     
-                    <!-- Contador de captura -->
                     <div id="captureTimer" class="capture-timer" style="display: none;">
                         <div class="timer-icon">⏱️</div>
                         <div class="timer-text">
@@ -593,7 +602,6 @@
             </div>
         </div>
         
-        <!-- Footer con botones -->
         <div class="modal-footer-custom">
             <button type="button" class="btn btn-secondary" id="btnBack" onclick="prevStep()" style="display: none;">
                 ← Atrás
@@ -644,6 +652,8 @@ function resetModal() {
     showStep(1);
     document.getElementById('nombre').value = '';
     document.getElementById('dni').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('jornada').value = '';
     document.getElementById('captureStatus').innerHTML = '';
     document.getElementById('videoFeed').style.display = 'none';
     document.getElementById('countdown').style.display = 'none';
@@ -693,6 +703,8 @@ function nextStep() {
         // Validar datos
         const nombre = document.getElementById('nombre').value.trim();
         const dni = document.getElementById('dni').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const jornada = document.getElementById('jornada').value;
         
         if (!nombre) {
             alert('⚠️ Por favor, introduce el nombre completo');
@@ -711,9 +723,35 @@ function nextStep() {
             return;
         }
         
+        if (!email) {
+            alert('⚠️ Por favor, introduce el email');
+            return;
+        }
+        
+        // Validación básica de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('⚠️ Formato de email inválido');
+            return;
+        }
+        
+        if (!jornada) {
+            alert('⚠️ Por favor, selecciona el tipo de jornada');
+            return;
+        }
+        
         // Actualizar confirmación
         document.getElementById('confirmNombre').textContent = nombre;
         document.getElementById('confirmDni').textContent = dni.toUpperCase();
+        document.getElementById('confirmEmail').textContent = email;
+        
+        // Convertir jornada a texto legible
+        const jornadaTexto = {
+            'completa': 'Jornada Completa',
+            'parcial': 'Jornada Parcial',
+            'intensiva': 'Jornada Intensiva'
+        };
+        document.getElementById('confirmJornada').textContent = jornadaTexto[jornada];
         
         showStep(2);
     } else if (currentStep === 2) {
@@ -742,6 +780,8 @@ function startCapture() {
     captureInProgress = true;
     const nombre = document.getElementById('nombre').value.trim();
     const dni = document.getElementById('dni').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const jornada = document.getElementById('jornada').value;
     
     // Deshabilitar botones
     document.getElementById('btnCapture').disabled = true;
@@ -767,13 +807,13 @@ function startCapture() {
             
             // Iniciar captura real
             setTimeout(() => {
-                actualCapture(nombre, dni);
+                actualCapture(nombre, dni, email, jornada);
             }, 500);
         }
     }, 1000);
 }
 
-function actualCapture(nombre, dni) {
+function actualCapture(nombre, dni, email, jornada) {
     document.getElementById('captureStatus').innerHTML = 
         '<div class="alert alert-info">📸 Capturando rostro... Mantén la mirada fija en la cámara</div>';
     
@@ -795,7 +835,7 @@ function actualCapture(nombre, dni) {
         }
     }, 1000);
     
-    // Llamar a la API de registro
+    // Llamar a la API de registro incluyendo email y jornada
     fetch('/api/api/registrar', {
         method: 'POST',
         headers: {
@@ -804,6 +844,8 @@ function actualCapture(nombre, dni) {
         body: JSON.stringify({
             nombre: nombre,
             dni: dni,
+            email: email,
+            jornada: jornada,
             duracion: 3
         })
     })
@@ -866,6 +908,18 @@ document.getElementById('nombre').addEventListener('keypress', function(e) {
 });
 
 document.getElementById('dni').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('email').focus();
+    }
+});
+
+document.getElementById('email').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('jornada').focus();
+    }
+});
+
+document.getElementById('jornada').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         nextStep();
     }
