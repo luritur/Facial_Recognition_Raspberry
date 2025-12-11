@@ -23,4 +23,4 @@ if __name__ == '__main__':
     # Crear carpetas necesarias si no existen
     os.makedirs(PATH_REGISTER, exist_ok=True)
     
-    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=8000, debug=False, threaded=True)
