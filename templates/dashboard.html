@@ -158,7 +158,9 @@
             </tr>
         </tbody>
     </table>
-</div><script>
+</div>
+
+<script>
 let versionActual = 0;
 let esperandoCambios = false;
 
@@ -246,6 +248,11 @@ async function cargarEmpleadosInicial() {
     console.log('[CLIENTE] 🚀 Cargando empleados iniciales...');
     try {
         const response = await fetch('/api/empleados');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         console.log('[CLIENTE] 📦 Datos recibidos:', data);
@@ -290,10 +297,27 @@ async function esperarCambios() {
     console.log(`[CLIENTE] 📡 Esperando cambios... (versión: ${versionActual})`);
     
     try {
-        const response = await fetch(`/api/empleados/esperar-cambios?version=${versionActual}`);
+        const response = await fetch(`/api/empleados/esperar-cambios?version=${versionActual}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('[CLIENTE] 📥 Response status:', response.status);
+        console.log('[CLIENTE] 📥 Response ok:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         console.log('[CLIENTE] 📦 Respuesta recibida:', data);
+        console.log('[CLIENTE] 📦 success:', data.success);
+        console.log('[CLIENTE] 📦 cambio:', data.cambio);
+        console.log('[CLIENTE] 📦 tipo:', data.tipo);
+        console.log('[CLIENTE] 📦 empleado:', data.empleado);
         
         if (data.success && data.cambio) {
             console.log(`[CLIENTE] 🔔 ¡Cambio detectado! Tipo: ${data.tipo}`, data.empleado);
@@ -303,9 +327,11 @@ async function esperarCambios() {
             // Procesar según el tipo de cambio
             if (data.tipo === 'nuevo') {
                 const emp = data.empleado;
+                console.log('[CLIENTE] ➕ Procesando empleado nuevo:', emp);
                 agregarEmpleado(emp.nombre, emp.email, emp.jornada, emp.horas, emp.estado);
             } else if (data.tipo === 'actualizado') {
                 const emp = data.empleado;
+                console.log('[CLIENTE] 🔄 Procesando actualización:', emp);
                 actualizarEmpleado(emp.email, emp.horas, emp.estado);
             }
         } else {
@@ -313,10 +339,12 @@ async function esperarCambios() {
         }
     } catch (error) {
         console.error('[CLIENTE] ❌ Error en long polling:', error);
+        console.error('[CLIENTE] ❌ Error stack:', error.stack);
         await new Promise(resolve => setTimeout(resolve, 3000));
     } finally {
         esperandoCambios = false;
         // Volver a esperar cambios
+        console.log('[CLIENTE] 🔁 Reactivando long polling...');
         setTimeout(() => esperarCambios(), 100);
     }
 }
@@ -325,4 +353,5 @@ async function esperarCambios() {
 console.log('[CLIENTE] 🎬 Iniciando dashboard...');
 cargarEmpleadosInicial();
 </script>
+
 {% endblock %}
