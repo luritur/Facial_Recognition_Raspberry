@@ -1,6 +1,9 @@
+
+
 from flask import Blueprint, jsonify, request
 import time
 import threading
+from core.control import stop_event
 
 # Importar módulos de tu código existente
 from core.main import ejecutar_run
@@ -109,7 +112,6 @@ def api_registrar():
                 
             ejecutar_registro(nombre, dni, email, jornada)
 
-            print(f"[API] Registro completado para: {nombre}")
                 
         except Exception as e:
             print(f"[API] Error en registro: {e}")
@@ -200,3 +202,29 @@ def esperar_cambios():
         'cambio': False,
         'version': version_actual
     })
+
+@api_bp.route('/api/delete_employee', methods=['POST'])
+def api_delete_employee():
+    """
+    Elimina un empleado por DNI.
+    Recibe: { "dni": "..." }
+    """
+    data = request.get_json()
+    dni = data.get('dni', '').strip()
+    from core.bd.bd_functions import borrar_empleado
+    try:
+        borrar_empleado(dni)
+        return jsonify({'status': 'ok', 'message': 'Empleado eliminado'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+
+
+
+@api_bp.route('/api/cancelar_registro', methods=['POST'])
+def cancelar_registro():
+    """
+    Cancela el registro de empleado en curso (detiene la grabación si está activa).
+    """
+    detener_run()    
+    return jsonify({'status': 'ok', 'message': 'Registro cancelado'}), 200
