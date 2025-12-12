@@ -482,10 +482,10 @@
         <div class="employee-card">
             <div class="employee-card-header">
                 <div class="employee-card-avatar">
-                    {{ employee.name[0]|upper }}{{ employee.name.split()[1][0]|upper if employee.name.split()|length > 1 else '' }}
+                    {{ employee.nombre[0]|upper }}{{ employee.nombre.split()[1][0]|upper if employee.nombre.split()|length > 1 else '' }}
                 </div>
                 <div class="employee-card-info">
-                    <h5>{{ employee.name }}</h5>
+                    <h5>{{ employee.nombre }}</h5>
                     <p>{{ employee.dni }}</p>
                 </div>
             </div>
@@ -493,6 +493,16 @@
                 <div class="detail-row">
                     <span class="detail-label">DNI:</span>
                     <span class="detail-value">{{ employee.dni }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ employee.email }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Jornada:</span>
+                    <span class="detail-value">
+                        {% if employee.jornada == 8 %}Jornada Completa{% elif employee.jornada == 4 %}Jornada Parcial{% elif employee.jornada == 6 %}Jornada Intensiva{% else %}{{ employee.jornada }}{% endif %}
+                    </span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Estado:</span>
@@ -546,9 +556,9 @@
                     <label class="form-label">Tipo de Jornada *</label>
                     <select id="jornada" class="form-control" required>
                         <option value="">Selecciona una jornada...</option>
-                        <option value="completa">Jornada Completa</option>
-                        <option value="parcial">Jornada Parcial</option>
-                        <option value="intensiva">Jornada Intensiva</option>
+                        <option value="8">Jornada Completa</option>
+                        <option value="4">Jornada Parcial</option>
+                        <option value="6">Jornada Intensiva</option>
                     </select>
                 </div>
             </div>
@@ -705,55 +715,73 @@ function nextStep() {
         const dni = document.getElementById('dni').value.trim();
         const email = document.getElementById('email').value.trim();
         const jornada = document.getElementById('jornada').value;
-        
+
         if (!nombre) {
             alert('⚠️ Por favor, introduce el nombre completo');
             return;
         }
-        
+
         if (!dni) {
             alert('⚠️ Por favor, introduce el DNI/NIE');
             return;
         }
-        
+
         // Validación básica de DNI español
         const dniRegex = /^[0-9]{8}[A-Z]$/i;
         if (!dniRegex.test(dni)) {
             alert('⚠️ Formato de DNI inválido. Debe ser 8 números seguidos de una letra (Ej: 12345678A)');
             return;
         }
-        
+
         if (!email) {
             alert('⚠️ Por favor, introduce el email');
             return;
         }
-        
+
         // Validación básica de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             alert('⚠️ Formato de email inválido');
             return;
         }
-        
+
         if (!jornada) {
             alert('⚠️ Por favor, selecciona el tipo de jornada');
             return;
         }
-        
-        // Actualizar confirmación
-        document.getElementById('confirmNombre').textContent = nombre;
-        document.getElementById('confirmDni').textContent = dni.toUpperCase();
-        document.getElementById('confirmEmail').textContent = email;
-        
-        // Convertir jornada a texto legible
-        const jornadaTexto = {
-            'completa': 'Jornada Completa',
-            'parcial': 'Jornada Parcial',
-            'intensiva': 'Jornada Intensiva'
-        };
-        document.getElementById('confirmJornada').textContent = jornadaTexto[jornada];
-        
-        showStep(2);
+
+        // Comprobar si ya existe usuario con ese email o dni
+        fetch('/api/api/check_user_exists', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, dni: dni })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                if (data.field === 'email') {
+                    alert('⚠️ Ya existe un usuario con ese email.');
+                } else if (data.field === 'dni') {
+                    alert('⚠️ Ya existe un usuario con ese DNI.');
+                }
+                return;
+            }
+            // Actualizar confirmación
+            document.getElementById('confirmNombre').textContent = nombre;
+            document.getElementById('confirmDni').textContent = dni.toUpperCase();
+            document.getElementById('confirmEmail').textContent = email;
+            // Convertir jornada a texto legible
+            const jornadaTexto = {
+                '8': 'Jornada Completa',
+                '4': 'Jornada Parcial',
+                '6': 'Jornada Intensiva'
+            };
+            document.getElementById('confirmJornada').textContent = jornadaTexto[jornada];
+            showStep(2);
+        })
+        .catch(err => {
+            alert('Error comprobando usuario: ' + err);
+        });
     } else if (currentStep === 2) {
         // Preparar cámara
         showStep(3);
@@ -845,7 +873,7 @@ function actualCapture(nombre, dni, email, jornada) {
             nombre: nombre,
             dni: dni,
             email: email,
-            jornada: jornada,
+            jornada: parseInt(jornada),
             duracion: 3
         })
     })

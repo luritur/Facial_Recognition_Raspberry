@@ -1,6 +1,6 @@
     #1.recorrer la carpeta de caras registradas: 
-    #   - En una lista guardar el "label" == el nombre del fichero (el nombre del usuario)
-    #       -->OJOJO para los labels hay que hacer un diccionario "Nombre":numero
+    #   - En una lista guardar el "label" == el nombre del fichero (el dni del usuario)
+    #       -->OJOJO para los labels hay que hacer un diccionario "dni":numero
     #   - En otra lista detectar la cara con detection.py + pasarla a gray + guardarla en una lista de imagenes
 
     #2. entrenar con caras y labels

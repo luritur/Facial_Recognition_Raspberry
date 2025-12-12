@@ -78,7 +78,7 @@ def namesToDictionary(path):
         if os.path.isdir(full_path):
             print("carpeta:" + item)
 
-            name = item  # El nombre de la carpeta ES el nombre de la persona
+            name = item  # El nombre de la carpeta ES el dni de la persona
             print("name:" + name)
 
             names_labels[name] = contador

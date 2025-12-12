@@ -1,83 +1,20 @@
 import threading
-
+from core.bd.bd_functions import obtener_empleados_lista
 # Variables globales para notificar cambios
 empleados_version = 0
 empleados_lock = threading.Lock()
 ultimo_cambio = None
 
-# Lista de empleados (empieza vacía o con datos de prueba)
-empleados_prueba = [
-    {
-        'nombre': 'Pepito Grillo',
-        'email': 'pepito.grillo@example.com',
-        'jornada': 8,
-        'horas': 0,
-        'estado': 'no_entro'
-    },
-    {
-        'nombre': 'Marcelo Fernández',
-        'email': 'marcelo.fernandez@example.com',
-        'jornada': 8,
-        'horas': 4,
-        'estado': 'trabajando'
-    },
-    {
-        'nombre': 'Ana Torres',
-        'email': 'ana.torres@example.com',
-        'jornada': 6,
-        'horas': 6,
-        'estado': 'completado'
-    },
-    {
-        'nombre': 'Luis Martínez',
-        'email': 'luis.martinez@example.com',
-        'jornada': 8,
-        'horas': 2,
-        'estado': 'trabajando'
-    },
-    {
-        'nombre': 'Carla Gómez',
-        'email': 'carla.gomez@example.com',
-        'jornada': 7,
-        'horas': 0,
-        'estado': 'no_entro'
-    }
-]
-
-def get_empleados_registrados():
-    """Devuelve la lista completa de empleados"""
-    with empleados_lock:
-        return empleados_prueba.copy()
 
 
-def agregar_empleado_a_lista(nombre, email, jornada, horas=0, estado='no_entro'):
-    """Agrega el empleado a la lista interna"""
-    global empleados_prueba
-    
-    with empleados_lock:
-        # Verificar si ya existe
-        existe = any(emp['nombre'] == email for emp in empleados_prueba) #cambiarlo por el DNI
-        if not existe:
-            empleados_prueba.append({
-                'nombre': nombre,
-                'email': email,
-                'jornada': jornada,
-                'horas': horas,
-                'estado': estado
-            })
-            print(f"[GESTION] ➕ Empleado {nombre} agregado a la lista")
-        else:
-            print(f"[GESTION] ⚠️ Empleado {email} ya existe")
-
-
-def notificar_nuevo_empleado(nombre, email, jornada, horas=0, estado='no_entro'):
+def notificar_nuevo_empleado(dni, nombre, email, jornada, horas=0, estado='out'):
     """Llama esto cuando REGISTRES un empleado nuevo"""
     global empleados_version, ultimo_cambio
     
     print(f"[NOTIFICACION] 🔔 Iniciando notificación para: {nombre}")
     
-    # PRIMERO: Agregar a la lista
-    agregar_empleado_a_lista(nombre, email, jornada, horas, estado)
+    # # PRIMERO: Agregar a la lista
+    # agregar_empleado_a_lista(nombre, email, jornada, horas, estado)
     
     # SEGUNDO: Notificar el cambio
     with empleados_lock:
@@ -87,6 +24,7 @@ def notificar_nuevo_empleado(nombre, email, jornada, horas=0, estado='no_entro')
             'tipo': 'nuevo',
             'empleado': {
                 'nombre': nombre,
+                'dni': dni,
                 'email': email,
                 'jornada': jornada,
                 'horas': horas,
@@ -105,7 +43,8 @@ def notificar_empleado_actualizado(email, horas, estado):
     
     with empleados_lock:
         # Actualizar en la lista
-        for emp in empleados_prueba:
+        empleados = obtener_empleados_lista()
+        for emp in empleados:
             if emp['email'] == email:
                 emp['horas'] = horas
                 emp['estado'] = estado

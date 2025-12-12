@@ -19,7 +19,7 @@ import core.control as control
 
 from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
 
-from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados, borrar_empleado, empleado_exist
+from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados_lista, borrar_empleado, empleado_exist
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -120,8 +120,8 @@ if camIndex is None:
     camIndex = 0
 
 
-def run_camera_thread(frames, duracion, path, name=None):
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, 0, name))
+def run_camera_thread(frames, duracion, path, dni=None):
+    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, 0, dni))
     t_camera.start()
     hilos_activos.append(t_camera)
     return t_camera
@@ -187,10 +187,10 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
     
     en_ejecucion = True
     
-    rc = run_camera_thread(frames, 8, PATH_REGISTER, nombre_empleado)
+    rc = run_camera_thread(frames, 8, PATH_REGISTER, dni)
     rc.join() 
     
-    persona_path = os.path.join(PATH_REGISTER, nombre_empleado) 
+    persona_path = os.path.join(PATH_REGISTER, dni) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
         en_ejecucion = False
@@ -201,13 +201,13 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
         return 
     
     print("llamando a notificar_empleado")
-    notificar_nuevo_empleado(dni, nombre_empleado,email, jornada)
+    notificar_nuevo_empleado(dni, nombre_empleado, email, jornada)
     agregar_empleado(dni, nombre_empleado,email, jornada, persona_path)
 
     print("llamada a notificar_empleado HECHAAA")
 
     num_fotos = len(os.listdir(persona_path)) 
-    print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado}")
+    print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado} DNI:{dni}")
 
     en_ejecucion = False
 

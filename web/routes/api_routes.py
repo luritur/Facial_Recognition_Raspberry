@@ -7,8 +7,9 @@ from core.main import ejecutar_run
 from core.main import ejecutar_registro
 from core.main import detener_run
 from core.main import run_entrenar_modelo_thread
-from core.gestion.gestion_empleados import get_empleados_registrados
+# from core.gestion.gestion_empleados import get_empleados_registrados
 import core.gestion.gestion_empleados as gestion_empleados
+from core.bd.bd_functions import obtener_empleados_lista
 
 
 # Variables globales para gestión de estado
@@ -45,13 +46,26 @@ def detectar_stop():
         "message": "Reconocimiento detenido"
     })
 
-@api_bp.route('/agregar_empleado', methods=['POST'])
-def agregar_empleado():
-    """Endpoint legacy - redirige al nuevo sistema"""
-    return jsonify({
-        "status": "redirect",
-        "message": "Usa el nuevo modal paso a paso"
-    })
+
+@api_bp.route('/api/check_user_exists', methods=['POST'])
+def api_check_user_exists():
+    """
+    Comprueba si ya existe un usuario con el mismo email o dni.
+    Recibe: { "email": "...", "dni": "..." }
+    """
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    dni = data.get('dni', '').strip()
+    from core.bd.bd_functions import Empleado
+    from flask import current_app
+    with current_app.app_context():
+        existe_email = Empleado.query.filter_by(email=email).first() is not None
+        existe_dni = Empleado.query.filter_by(dni=dni).first() is not None
+    if existe_email:
+        return jsonify({'exists': True, 'field': 'email'}), 200
+    if existe_dni:
+        return jsonify({'exists': True, 'field': 'dni'}), 200
+    return jsonify({'exists': False}), 200
 
 @api_bp.route('/api/registrar', methods=['POST'])
 def api_registrar():
@@ -67,10 +81,14 @@ def api_registrar():
         nombre = data.get('nombre', '').strip()
         dni = data.get('dni', '').strip()
         email = data.get('email', '').strip()      # Nuevo campo
-        jornada = data.get('jornada', '').strip()  # Nuevo campo
+        jornada_val = data.get('jornada', '')
+        if isinstance(jornada_val, int):
+            jornada = jornada_val
+        else:
+            jornada = int(jornada_val.strip()) if jornada_val else 8
         
-        # Configuración (si no viene, usa 3 por defecto)
-        duracion = data.get('duracion', 3)
+        # Configuración (si no viene, usa 8 por defecto)
+        duracion = data.get('duracion', 8)
         if not nombre or not dni:
             return jsonify({
                 'status': 'error',
@@ -142,7 +160,7 @@ def api_entrenarModelo():
 def obtener_empleados():
     """Devuelve empleados actuales"""
     #empleados = gestion.obtener_todos_empleados()
-    empleados = get_empleados_registrados()
+    empleados = obtener_empleados_lista()
     
     return jsonify({
         'success': True,
