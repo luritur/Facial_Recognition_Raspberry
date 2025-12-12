@@ -10,6 +10,9 @@ from core.bd.db import db
 from config import PATH_REGISTER, MODEL_PATH
 import os, shutil
 import config
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from config import Config
 
 def crear_base_datos():
     """Crea la base de datos y tablas si no existen"""
@@ -39,29 +42,37 @@ def agregar_empleado(dni, nombre, email, jornada, path_image, horas=0, estado='o
         db.session.commit()
         print(f"[DB] ➕ Empleado {nombre} agregado")
 
+
 def obtener_empleados_lista():
-    """Devuelve los empleados como una lista de diccionarios"""
-    empleados = []
-    with current_app.app_context():
-        for emp in Empleado.query.all():
-            empleados.append({
-                'nombre': emp.nombre,
-                'dni': emp.dni,
-                'email': emp.email,
-                'jornada': emp.jornada,
-                'estado': emp.estado,
-                'horas': emp.horas
-            })
-    return empleados
+ 
+    engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    try:
+        empleados = session.query(Empleado).all()
+        return empleados
+    except Exception as e:
+        print(f"Error al obtener empleados: {e}")
+        return []
+    finally:
+        session.close()  # Importante: cerrar la sesión
 
-def get_empleado_data(dni):
+# En bd_functions.py
+def get_empleado_name(dni):
 
-    with current_app.app_context():
-        empleado = Empleado.query.filter_by(dni=dni).first()
-        nombre = empleado.nombre
-        email = empleado.email
-        jornada = empleado.jornada
-        return nombre, email, jornada
+    # Crear una sesión independiente sino daba error
+    engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    try:
+        empleado = session.query(Empleado).filter_by(dni=dni).first()
+        if empleado:
+            return empleado.nombre
+        return "Desconocido"
+    finally:
+        session.close()
     
 def empleado_exist(dni):
     """

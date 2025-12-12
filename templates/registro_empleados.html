@@ -694,10 +694,23 @@ function openModal() {
 
 function entrenarModelo(){
     fetch('api/api/entrenarModelo', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch(err => console.error(err));  
+        .then(response => {
+            if (!response.ok) {
+                // Respuesta 400 o similar
+                return response.json().then(data => { throw data });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('OK:', data);
+            alert('✅ Entrenamiento del modelo iniciado');
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('❌ No hay empleados registrados con los que entrenar el modelo');
+        });
 }
+
 
 function closeModal() {
     if (captureInProgress) {
