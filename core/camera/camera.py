@@ -31,7 +31,7 @@ def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
     return None
 
 
-def camara_run(frames, duracion,path, camera_index, dni_persona=None):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion,path, camera_index, dni_persona=None):  
     cap = _open_camera_with_retries(camera_index, retries=4, delay=0.8)
     if cap is None:
         print(f"ERROR: No se pudo abrir la camara index={camera_index} tras varios intentos")
@@ -49,7 +49,10 @@ def camara_run(frames, duracion,path, camera_index, dni_persona=None):  #FALTA D
             os.makedirs(carpeta_persona, exist_ok=True)
             minimo_una_cara_detectada = None
 
-            while time.time() - inicio < duracion: 
+            while time.time() - inicio < duracion:
+                if stop_event.is_set():
+                    print("🛑 Cámara detenido por señal")
+                    break 
                 ret, frame = cap.read()
                 if not ret or frame is None:
                     consecutive_failures += 1

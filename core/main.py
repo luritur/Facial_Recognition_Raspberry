@@ -17,9 +17,10 @@ from core.control import hilos_activos
 from core.control import stop_event
 import core.control as control
 
+import config
 from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
 
-from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados_lista, borrar_empleado, empleado_exist
+from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados_lista, empleado_exist
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -55,51 +56,17 @@ else:
             if self.when_pressed:
                 self.when_pressed()
 
-# ========================================
-# CONFIGURAR PATH
-# ========================================
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-sys.path.insert(0, PROJECT_ROOT)
-
-
 
 # ========================================
-# CONFIGURACIÓN DE HARDWARE
+# IMPORTAR CONFIGURACIÓN GLOBAL
 # ========================================
-LED_PIN = 17
-BTN_RUN = Button(24, pull_up=True)
-BTN_REGISTRAR = Button(23, pull_up=True)
-led = LED(LED_PIN)
-camIndex = 0
+from config import LED_PIN, BTN_RUN, BTN_REGISTRAR, led, camIndex, PATH_REGISTER, PATH_IMAGENES, MODEL_PATH
 
-BASE_PATH = PROJECT_ROOT
-registered_dni_csv = pd.read_csv(os.path.join(PROJECT_ROOT, "registeredDNI.csv"))
-
-# Ajustar paths según plataforma
-PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
-PATH_IMAGENES = "/home/pi/Facial_Recognition_Raspberry/imagenes/frames/"
-
-
-
-   # recognizer.save('/home/pi/Facial_Recognition_Raspberry/trained_model.xml')
-    #return '/home/pi/Facial_Recognition_Raspberry/trained_model.xml'
-MODEL_PATH = "/home/pi/Facial_Recognition_Raspberry/trained_model.xml"
-
-if os.path.isfile(MODEL_PATH):
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
-
-    recognizer.read (MODEL_PATH)
-    names_labels = detection.namesToDictionary(PATH_REGISTER) 
-else: 
-    recognizer = None
-    names_labels = None
 
 
 
 
 frames = queue.frames
-
 # ========================================
 # FUNCIONES
 # ========================================
@@ -162,34 +129,39 @@ def run_entrenar_modelo_thread():
         
 
 def train_model():
-    global recognizer, names_labels
     print("🔄 Entrenando modelo...")
     
-    xml = train.trainLBPH(PATH_REGISTER)
+    config.xml = train.trainLBPH(PATH_REGISTER)
     
-    recognizer = cv2.face.LBPHFaceRecognizer_create()
-    recognizer.read(xml)
-    names_labels = detection.namesToDictionary(PATH_REGISTER) 
+    config.recognizer = cv2.face.LBPHFaceRecognizer_create()
+    config.recognizer.read(config.xml)
+    config.names_labels = detection.namesToDictionary(PATH_REGISTER) 
     control.entrenando_modelo = False
 
-    print(f"MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {names_labels}")
+    print(f"MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {config.names_labels}")
     print("=== REGISTRO COMPLETADO ===\n")
 
 
 en_ejecucion = False
 
 def ejecutar_registro(nombre_empleado, dni, email, jornada):
-    global en_ejecucion, recognizer, names_labels
+    global en_ejecucion
 
     if en_ejecucion:
         print("⚠️ Ya hay una acción en ejecución.")
         return
     
     en_ejecucion = True
-    
+    if stop_event.is_set():
+        print("🛑 Cámara detenido por señal")
+        return 
+        
     rc = run_camera_thread(frames, 8, PATH_REGISTER, dni)
     rc.join() 
     
+    if stop_event.is_set():
+        print("🛑 Cámara detenido por señal")
+        return 
     persona_path = os.path.join(PATH_REGISTER, dni) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
@@ -207,18 +179,26 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
     print("llamada a notificar_empleado HECHAAA")
 
     num_fotos = len(os.listdir(persona_path)) 
-    print(f"✅ Se capturaron {num_fotos} imágenes de {nombre_empleado} DNI:{dni}")
-
+    print(f"Se capturaron {num_fotos} imágenes de {nombre_empleado} DNI:{dni}")
+    print(f"✅ Registro completado para:{nombre_empleado} DNI:{dni} ")
     en_ejecucion = False
 
 def ejecutar_run():
-    global en_ejecucion, recognizer, names_labels
+
+    global en_ejecucion
     stop_event.clear()
     if en_ejecucion:
         print("⚠️ Ya hay una acción en ejecución.")
         return
     
-    if recognizer is None or names_labels is None:
+    # VERIFICAR SI EL ARCHIVO XML FUE ELIMINADO
+    if not os.path.exists(MODEL_PATH):
+        config.recognizer = None
+        config.names_labels = None
+        config.xml = None
+        print("⚠️ No existe ningun modelo")
+    
+    if config.recognizer is None or config.names_labels is None:
         print("❌ Modelo no cargado. Registra al menos una persona primero.")
         return
     
@@ -229,7 +209,7 @@ def ejecutar_run():
     
     run_camera_thread(frames, 10, PATH_IMAGENES)
     run_detect_thread()
-    run_recognition_thread(recognizer, names_labels)
+    run_recognition_thread(config.recognizer, config.names_labels)
     
     en_ejecucion = False
     print("\n=== RUN COMPLETADO ===\n")

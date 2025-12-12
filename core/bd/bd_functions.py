@@ -7,7 +7,9 @@ from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from core.bd.bd_create import Empleado
 from core.bd.db import db
-
+from config import PATH_REGISTER, MODEL_PATH
+import os, shutil
+import config
 
 def crear_base_datos():
     """Crea la base de datos y tablas si no existen"""
@@ -88,7 +90,25 @@ def actualizar_empleado(email, horas=None, estado=None):
         print(f"[DB] 🔄 Empleado {email} actualizado")
 
 def borrar_empleado(dni):
-    """Elimina un empleado por email"""
+
+    #borramos xml si era el ultimo empleado
+    #revisar que existe el xml
+    if os.path.isfile(MODEL_PATH):
+        if len(os.listdir(PATH_REGISTER)) == 1: 
+            os.remove(MODEL_PATH)
+            config.xml = None
+            config.recognizer = None
+            config.names_labels = None
+            print("⚠️ ATENCION: Has eliminado al ultimo empleado. Se ha eliminado el modelo")
+
+
+    #borramos carpeta de fotos :    
+    persona_path = os.path.join(PATH_REGISTER, dni) 
+    if os.path.exists(persona_path):
+        shutil.rmtree(persona_path)
+        print("Carpeta borrada") 
+    
+
     with current_app.app_context():
         emp = Empleado.query.filter_by(dni=dni).first()
         if not emp:

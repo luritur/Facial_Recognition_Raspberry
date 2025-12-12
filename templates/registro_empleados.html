@@ -4,6 +4,34 @@
 
 {% block extra_css %}
 <style>
+        .delete-employee-btn {
+            background: #e74c3c;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(231,76,60,0.10);
+            transition: transform 0.18s, box-shadow 0.18s;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .delete-employee-btn:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 6px 18px rgba(231,76,60,0.18);
+            background: #c0392b;
+        }
+        @media (max-width: 500px) {
+            .delete-employee-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1.1rem;
+            }
+        }
     .header-section {
         background: white;
         padding: 25px;
@@ -508,7 +536,32 @@
                     <span class="detail-label">Estado:</span>
                     <span class="detail-value">✅ Registrado</span>
                 </div>
+                <div class="detail-row" style="justify-content: flex-end;">
+                    <button class="delete-employee-btn" title="Eliminar empleado" onclick="deleteEmployee('{{ employee.dni }}')">
+                        🗑️
+                    </button>
+                </div>
             </div>
+        <script>
+        function deleteEmployee(dni) {
+            if (!confirm('¿Seguro que quieres eliminar este empleado?')) return;
+            fetch('/api/api/delete_employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dni: dni })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert('Empleado eliminado correctamente');
+                    location.reload();
+                } else {
+                    alert('Error al eliminar: ' + data.message);
+                }
+            })
+            .catch(err => alert('Error al eliminar: ' + err));
+        }
+        </script>
         </div>
         {% endfor %}
     {% else %}
@@ -651,7 +704,9 @@ function closeModal() {
         if (!confirm('⚠️ La captura está en proceso. ¿Estás seguro de cancelar?')) {
             return;
         }
-        stopCapture();
+        // Llama al endpoint para cancelar registro
+        fetch('/api/api/cancelar_registro', { method: 'POST' })
+            .then(() => stopCapture());
     }
     document.getElementById('addEmployeeModal').classList.remove('show');
     resetModal();
