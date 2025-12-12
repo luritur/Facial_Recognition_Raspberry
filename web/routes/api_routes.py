@@ -147,13 +147,23 @@ def api_registrar_stop():
 
 @api_bp.route('/api/entrenarModelo', methods=['POST'])
 def api_entrenarModelo():
-    
+    empleados = obtener_empleados_lista()
+
+    # Si NO hay empleados, devolver mensaje y NO entrenar
+    if not empleados:   # Esto cubre None o lista vacía
+        return jsonify({
+            'status': 'error',
+            'message': 'No habría empleados para entrenar el modelo'
+        }), 400
+
+    # Si sí hay empleados, entrenar
     run_entrenar_modelo_thread()
 
     return jsonify({
         'status': 'ok',
-        'message': 'Modelo Entrenado'
+        'message': 'Modelo entrenado'
     })
+
 
 ############################################################
 
@@ -161,12 +171,24 @@ def api_entrenarModelo():
 @api_bp.route('/empleados', methods=['GET'])
 def obtener_empleados():
     """Devuelve empleados actuales"""
-    #empleados = gestion.obtener_todos_empleados()
     empleados = obtener_empleados_lista()
+    
+    # Convertir objetos Empleado a diccionarios
+    empleados_dict = [
+        {
+            'nombre': emp.nombre,
+            'dni': emp.dni,
+            'email': emp.email,
+            'jornada': emp.jornada,
+            'horas': emp.horas_trabajadas if hasattr(emp, 'horas_trabajadas') else 0,
+            'estado': emp.estado if hasattr(emp, 'estado') else 'out'
+        }
+        for emp in empleados
+    ]
     
     return jsonify({
         'success': True,
-        'empleados': empleados,
+        'empleados': empleados_dict,
         'version': gestion_empleados.empleados_version
     })
 
@@ -228,3 +250,55 @@ def cancelar_registro():
     """
     detener_run()    
     return jsonify({'status': 'ok', 'message': 'Registro cancelado'}), 200
+
+
+
+
+@api_bp.route('/recognition_event', methods=['GET'])
+def recognition_event():
+    """
+    Long polling: espera hasta que haya un nuevo reconocimiento
+    """
+    last_client_id = int(request.args.get('last', 0))
+    timeout = 30
+    start = time.time()
+
+    print(f"[RECOGNITION POLLING] 👀 Cliente esperando evento. Último cliente ID: {last_client_id}")
+    print(f"[RECOGNITION POLLING] 🧠 Último ID del servidor: {gestion_empleados.ultimo_id_reconocimiento}")
+
+    while (time.time() - start) < timeout:
+        with gestion_empleados.empleados_lock:  
+            if gestion_empleados.ultimo_id_reconocimiento > last_client_id:
+                print(f"[RECOGNITION POLLING] 🎉 Nuevo reconocimiento detectado!")
+                print(f"[RECOGNITION POLLING] 📢 Mensaje: {gestion_empleados.ultima_persona_reconocida}")
+
+                return jsonify({
+                    'success': True,
+                    'nuevo': True,
+                    'id': gestion_empleados.ultimo_id_reconocimiento,
+                    'mensaje': gestion_empleados.ultima_persona_reconocida,
+                    'confidence': gestion_empleados.confidence
+                })
+
+        time.sleep(0.5)
+
+    # No hubo cambios → mantener conexión viva
+    print(f"[RECOGNITION POLLING] ⏰ Timeout sin cambios")
+
+    return jsonify({
+        'success': True,
+        'nuevo': False,
+        'id': last_client_id
+    })
+
+
+@api_bp.route('/api/empleados_estado_actualizar', methods=['GET'])
+def empleados_estado_actualizar():
+    """
+    Endpoint específico para detectar cambios de estado.
+    Devuelve la versión actual y el último cambio de estado.
+    """
+    return jsonify({
+        'version': gestion_empleados.empleados_version,
+        'ultimo_cambio': gestion_empleados.ultimo_cambio
+    })

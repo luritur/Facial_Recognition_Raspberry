@@ -120,8 +120,28 @@
         font-weight: 600;
         color: #2c3e50;
     }
+    
+    /* Animación para cambios de estado */
+    .estado-indicator {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid #555;
+        transition: background-color 0.5s ease, transform 0.3s ease;
+    }
+    
+    .estado-indicator.changed {
+        animation: pulse 0.6s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+    }
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="header-section">
     <h2>Empleados</h2>
@@ -155,7 +175,7 @@
         </thead>
         <tbody>
             <tr>
-                <td colspan="5" class="text-center text-muted">Cargando empleados...</td>
+                <td colspan="6" class="text-center text-muted">Cargando empleados...</td>
             </tr>
         </tbody>
     </table>
@@ -164,19 +184,32 @@
 <script>
 let versionActual = 0;
 let esperandoCambios = false;
+let lastEmpleadosVersion = null;  // Variable para polling de estados
 
 // Función para limpiar la fila vacía
 function limpiarFilaVacia() {
     const tbody = document.querySelector("#tablaEmpleados tbody");
     if (tbody && tbody.children.length === 1 &&
         tbody.children[0].children[0] &&
-        tbody.children[0].children[0].colSpan === 5) {
+        tbody.children[0].children[0].colSpan >= 5) {
         tbody.innerHTML = "";
     }
 }
 
+// Función para obtener el color según el estado
+function obtenerColorEstado(estado) {
+    const colores = {
+        "trabajando": "#ffc107",  // Amarillo
+        "in": "#ffc107",          // Amarillo (alias)
+        "out": "#dc3545",         // Rojo
+        "completado": "#28a745",  // Verde
+        "completada": "#28a745"   // Verde (alias)
+    };
+    return colores[estado] || "#6c757d"; // Gris por defecto
+}
+
 // Función para agregar un empleado NUEVO
-function agregarEmpleado(nombre,dni, email, jornada, horas, estado) {
+function agregarEmpleado(nombre, dni, email, jornada, horas, estado) {
     console.log(`[UI] ➕ Agregando empleado: ${nombre}`);
     limpiarFilaVacia();
     const tbody = document.querySelector("#tablaEmpleados tbody");
@@ -186,63 +219,117 @@ function agregarEmpleado(nombre,dni, email, jornada, horas, estado) {
     }
 
     const fila = document.createElement("tr");
+    fila.setAttribute('data-dni', dni);
     fila.setAttribute('data-email', email);
     
     const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
-    
-    const colores = {
-        "trabajando": "yellow",
-        "out": "red",
-        "completado": "green"
-    };
-    const color = colores[estado] || "gray";
+    const color = obtenerColorEstado(estado);
 
     fila.innerHTML = `
         <td>${nombre}</td>
         <td>${dni}</td>
         <td>${email}</td>
-        <td>${jornada}</td>
+        <td>${jornada}h</td>
         <td>
             <div style="width:100%; background:#e5e5e5; border-radius:6px;">
-                <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
+                <div class="progress-fill-bar" style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px; transition: width 0.5s ease;"></div>
             </div>
-            <small>${horas}/${jornada} h</small>
+            <small class="horas-texto">${horas}/${jornada} h</small>
         </td>
-        <td><span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span></td>
+        <td>
+            <span class="estado-indicator" data-estado="${estado}" style="background:${color};"></span>
+        </td>
     `;
     tbody.appendChild(fila);
     console.log(`[UI] ✅ Empleado agregado a la tabla: ${nombre}`);
 }
 
-// Función para actualizar un empleado EXISTENTE
-function actualizarEmpleado(email, horas, estado) {
-    console.log(`[UI] 🔄 Actualizando empleado: ${email}`);
-    const fila = document.querySelector(`tr[data-email="${email}"]`);
+// Función para actualizar un empleado EXISTENTE (horas y/o estado)
+function actualizarEmpleado(dni, horas, estado) {
+    console.log(`[UI] 🔄 Actualizando empleado DNI: ${dni}, horas: ${horas}, estado: ${estado}`);
+    const fila = document.querySelector(`tr[data-dni="${dni}"]`);
     if (!fila) {
-        console.warn(`[UI] ⚠️ Empleado ${email} no encontrado en tabla`);
+        console.warn(`[UI] ⚠️ Empleado con DNI ${dni} no encontrado en tabla`);
         return;
     }
 
-    const jornada = parseFloat(fila.cells[2].textContent);
-    const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
+    // Actualizar horas y progreso
+    if (horas !== undefined) {
+        const jornadaText = fila.cells[3].textContent;
+        const jornada = parseFloat(jornadaText);
+        const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
+        
+        const progressBar = fila.querySelector('.progress-fill-bar');
+        const horasTexto = fila.querySelector('.horas-texto');
+        
+        if (progressBar) {
+            progressBar.style.width = `${progreso}%`;
+        }
+        if (horasTexto) {
+            horasTexto.textContent = `${horas}/${jornada} h`;
+        }
+    }
     
-    fila.cells[3].innerHTML = `
-        <div style="width:100%; background:#e5e5e5; border-radius:6px;">
-            <div style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px;"></div>
-        </div>
-        <small>${horas}/${jornada} h</small>
-    `;
-    
-    const colores = {
-        "trabajando": "yellow",
-        "out": "red",
-        "completado": "green"
-    };
-    const color = colores[estado] || "gray";
-    
-    fila.cells[4].innerHTML = `<span style="display:inline-block;width:16px;height:16px;background:${color};border-radius:50%;border:1px solid #555;"></span>`;
-    
-    console.log(`[UI] ✅ Empleado actualizado: ${email} - ${horas}h - ${estado}`);
+    // Actualizar estado
+    if (estado !== undefined) {
+        const estadoIndicator = fila.querySelector('.estado-indicator');
+        if (estadoIndicator) {
+            const color = obtenerColorEstado(estado);
+            estadoIndicator.style.background = color;
+            estadoIndicator.setAttribute('data-estado', estado);
+            
+            // Añadir animación de pulso
+            estadoIndicator.classList.add('changed');
+            setTimeout(() => {
+                estadoIndicator.classList.remove('changed');
+            }, 600);
+            
+            console.log(`[UI] ✅ Estado actualizado para ${dni}: ${estado} (color: ${color})`);
+        }
+    }
+}
+
+// Polling para detectar cambios de estado
+function iniciarPollingEstados() {
+    setInterval(() => {
+        fetch('/api/api/empleados_estado_actualizar')
+            .then(response => response.json())
+            .then(data => {
+                console.log('[POLLING] 📊 Respuesta recibida:', data);
+                
+                if (lastEmpleadosVersion === null) {
+                    lastEmpleadosVersion = data.version;
+                    console.log('[POLLING] 🆕 Primera versión establecida:', lastEmpleadosVersion);
+                    return;
+                }
+                
+                if (data.version !== lastEmpleadosVersion) {
+                    console.log(`[POLLING] 🔔 Nueva versión detectada: ${data.version} (anterior: ${lastEmpleadosVersion})`);
+                    lastEmpleadosVersion = data.version;
+                    
+                    if (data.ultimo_cambio) {
+                        console.log('[POLLING] 📦 Último cambio:', data.ultimo_cambio);
+                        
+                        if (data.ultimo_cambio.tipo === 'actualizado') {
+                            const emp = data.ultimo_cambio.empleado;
+                            console.log(`[POLLING] 🔄 Actualizando estado de ${emp.dni} a ${emp.estado}`);
+                            actualizarEstadoEmpleado(emp.dni, emp.estado);
+                        }
+                    }
+                } else {
+                    console.log('[POLLING] ⏸️ Sin cambios (misma versión)');
+                }
+            })
+            .catch(error => {
+                console.error('[POLLING] ❌ Error:', error);
+            });
+    }, 2000); // Poll cada 2 segundos
+}
+
+// Función para actualizar solo el estado de un empleado (para polling)
+function actualizarEstadoEmpleado(dni, nuevoEstado) {
+    console.log(`[UI-POLLING] 🔄 Actualizando estado de DNI: ${dni} a ${nuevoEstado}`);
+    actualizarEmpleado(dni, undefined, nuevoEstado);
 }
 
 // Cargar TODOS los empleados al inicio
@@ -266,7 +353,7 @@ async function cargarEmpleadosInicial() {
             if (data.empleados.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center text-muted">No hay empleados registrados aún...</td>
+                        <td colspan="6" class="text-center text-muted">No hay empleados registrados aún...</td>
                     </tr>
                 `;
             } else {
@@ -276,9 +363,13 @@ async function cargarEmpleadosInicial() {
             }
             
             versionActual = data.version;
+            lastEmpleadosVersion = data.version;
             console.log(`[CLIENTE] ✅ Empleados iniciales cargados. Versión: ${versionActual}`);
             
-            // Iniciar long polling
+            // Iniciar polling para cambios de estado
+            iniciarPollingEstados();
+            
+            // Iniciar long polling para nuevos empleados
             console.log('[CLIENTE] 🔄 Iniciando long polling...');
             esperarCambios();
         }
@@ -288,7 +379,9 @@ async function cargarEmpleadosInicial() {
     }
 }
 
-// Long polling: esperar cambios
+// Polling para detectar cambios de estado
+
+// Long polling: esperar cambios (para nuevos empleados)
 async function esperarCambios() {
     if (esperandoCambios) {
         console.warn('[CLIENTE] ⚠️ Ya hay una petición activa');
@@ -306,9 +399,6 @@ async function esperarCambios() {
             }
         });
         
-        console.log('[CLIENTE] 📥 Response status:', response.status);
-        console.log('[CLIENTE] 📥 Response ok:', response.ok);
-        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -316,10 +406,6 @@ async function esperarCambios() {
         const data = await response.json();
         
         console.log('[CLIENTE] 📦 Respuesta recibida:', data);
-        console.log('[CLIENTE] 📦 success:', data.success);
-        console.log('[CLIENTE] 📦 cambio:', data.cambio);
-        console.log('[CLIENTE] 📦 tipo:', data.tipo);
-        console.log('[CLIENTE] 📦 empleado:', data.empleado);
         
         if (data.success && data.cambio) {
             console.log(`[CLIENTE] 🔔 ¡Cambio detectado! Tipo: ${data.tipo}`, data.empleado);
@@ -334,19 +420,17 @@ async function esperarCambios() {
             } else if (data.tipo === 'actualizado') {
                 const emp = data.empleado;
                 console.log('[CLIENTE] 🔄 Procesando actualización:', emp);
-                actualizarEmpleado(emp.email, emp.horas, emp.estado);
+                actualizarEmpleado(emp.dni, emp.horas, emp.estado);
             }
         } else {
             console.log('[CLIENTE] ⏰ Sin cambios (timeout)');
         }
     } catch (error) {
         console.error('[CLIENTE] ❌ Error en long polling:', error);
-        console.error('[CLIENTE] ❌ Error stack:', error.stack);
         await new Promise(resolve => setTimeout(resolve, 3000));
     } finally {
         esperandoCambios = false;
         // Volver a esperar cambios
-        console.log('[CLIENTE] 🔁 Reactivando long polling...');
         setTimeout(() => esperarCambios(), 100);
     }
 }

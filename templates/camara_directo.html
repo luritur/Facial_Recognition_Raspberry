@@ -16,14 +16,23 @@
         color: #2c3e50;
         font-weight: 600;
     }
+    
+    /* Layout principal con video y chat */
+    .main-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
     .camera-container {
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
     }
+    
     .video-wrapper {
         position: relative;
         background: #000;
@@ -31,11 +40,13 @@
         overflow: hidden;
         aspect-ratio: 16/9;
     }
+    
     .video-feed {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
+    
     .video-overlay {
         position: absolute;
         top: 0;
@@ -47,6 +58,7 @@
         justify-content: space-between;
         align-items: start;
     }
+    
     .live-indicator {
         display: flex;
         align-items: center;
@@ -58,6 +70,7 @@
         font-weight: 600;
         font-size: 0.9rem;
     }
+    
     .live-dot {
         width: 10px;
         height: 10px;
@@ -65,10 +78,12 @@
         border-radius: 50%;
         animation: pulse 1.5s ease-in-out infinite;
     }
+    
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
+    
     .camera-info {
         background: rgba(0,0,0,0.7);
         padding: 8px 15px;
@@ -76,6 +91,145 @@
         color: white;
         font-size: 0.85rem;
     }
+    
+    /* Panel de Chat de Reconocimiento */
+    .chat-panel {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 200px);
+        min-height: 500px;
+        max-height: 800px;
+    }
+    
+    .chat-header {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .chat-header i {
+        font-size: 1.5rem;
+    }
+    
+    .chat-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .chat-status {
+        margin-top: 5px;
+        font-size: 0.85rem;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #2ecc71;
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .chat-message {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        animation: slideIn 0.3s ease-out;
+        border-left: 4px solid #3498db;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .message-name {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #95a5a6;
+    }
+    
+    .message-confidence {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .confidence-bar {
+        width: 100px;
+        height: 6px;
+        background: #ecf0f1;
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+    
+    .chat-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #95a5a6;
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .chat-empty i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+    
     .controls-panel {
         margin-top: 20px;
         display: flex;
@@ -84,6 +238,7 @@
         justify-content: center;
         align-items: center;
     }
+    
     .control-btn {
         padding: 12px 24px;
         border: none;
@@ -96,72 +251,94 @@
         gap: 8px;
         transition: all 0.2s;
     }
+    
     .btn-primary {
         background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
         color: white;
     }
+    
     .btn-primary:hover {
         background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(52,152,219,0.3);
     }
+    
     .btn-danger {
         background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         color: white;
     }
+    
     .btn-danger:hover {
         background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(231,76,60,0.3);
     }
+    
     .btn-secondary {
         background: #6c757d;
         color: white;
     }
+    
     .btn-secondary:hover {
         background: #5a6268;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(108,117,125,0.3);
     }
+    
     .info-panel {
         margin-top: 20px;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 15px;
     }
+    
     .info-card {
         background: #f8f9fa;
         padding: 15px;
         border-radius: 8px;
         border-left: 4px solid #3498db;
     }
+    
     .info-card-title {
         color: #6c757d;
         font-size: 0.85rem;
         margin-bottom: 5px;
     }
+    
     .info-card-value {
         color: #2c3e50;
         font-size: 1.1rem;
         font-weight: 600;
     }
-    .no-camera {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: white;
-        text-align: center;
-        padding: 40px;
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .main-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .chat-panel {
+            height: 400px;
+        }
     }
-    .no-camera i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        opacity: 0.7;
+    
+    /* Scrollbar personalizado */
+    .chat-messages::-webkit-scrollbar {
+        width: 8px;
     }
-    .no-camera h3 {
-        margin-bottom: 10px;
+    
+    .chat-messages::-webkit-scrollbar-track {
+        background: #ecf0f1;
+        border-radius: 4px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: #bdc3c7;
+        border-radius: 4px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: #95a5a6;
     }
 </style>
 {% endblock %}
@@ -171,73 +348,90 @@
     <h2>Cámara en Directo</h2>
 </div>
 
-<div class="camera-container">
-    <div class="video-wrapper">
-        <!-- Stream de video -->
-        <img id="videoFeed" class="video-feed" src="{{ url_for('video.video_feed') }}" alt="Cámara en vivo">
+<div class="main-layout">
+    <!-- Sección de Video -->
+    <div class="camera-container">
+        <div class="video-wrapper">
+            <img id="videoFeed" class="video-feed" src="{{ url_for('video.video_feed') }}" alt="Cámara en vivo">
 
-        <!-- Placeholder cuando no hay cámara -->
-        <div class="no-camera" id="noCamera" style="display: none;">
-            <i class="bi bi-camera-video-off"></i>
-            <h3>Cámara no disponible</h3>
-            <p>Conecta una cámara o configura el stream de video</p>
+            <div class="video-overlay">
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>EN VIVO</span>
+                </div>
+                <div class="camera-info">
+                    <i class="bi bi-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+            </div>
         </div>
 
-        <div class="video-overlay">
-            <div class="live-indicator">
-                <span class="live-dot"></span>
-                <span>EN VIVO</span>
+        <div class="controls-panel">
+            <button class="control-btn btn-primary" onclick="startRecognition()">
+                <i class="bi bi-play-circle"></i>
+                Iniciar Reconocimiento
+            </button>
+            <button class="control-btn btn-danger" onclick="stopRecognition()">
+                <i class="bi bi-stop-circle"></i>
+                Detener Reconocimiento
+            </button>
+            <button class="control-btn btn-secondary" onclick="takeSnapshot()">
+                <i class="bi bi-camera"></i>
+                Capturar Imagen
+            </button>
+            <button class="control-btn btn-secondary" onclick="toggleFullscreen()">
+                <i class="bi bi-fullscreen"></i>
+                Pantalla Completa
+            </button>
+        </div>
+
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">Estado de la cámara</div>
+                <div class="info-card-value" id="cameraStatus">Conectada</div>
             </div>
-            <div class="camera-info">
-                <i class="bi bi-clock"></i>
-                <span id="currentTime"></span>
+            <div class="info-card">
+                <div class="info-card-title">Resolución</div>
+                <div class="info-card-value" id="resolution">1920x1080</div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">FPS</div>
+                <div class="info-card-value" id="fps">30</div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">Reconocimientos</div>
+                <div class="info-card-value" id="totalRecognitions">0</div>
             </div>
         </div>
     </div>
-</div>
 
-
-    <div class="controls-panel">
-        <button class="control-btn btn-primary" onclick="startRecognition()">
-            <i class="bi bi-play-circle"></i>
-            Iniciar Reconocimiento
-        </button>
-        <button class="control-btn btn-danger" onclick="stopRecognition()">
-            <i class="bi bi-stop-circle"></i>
-            Detener Reconocimiento
-        </button>
-        <button class="control-btn btn-secondary" onclick="takeSnapshot()">
-            <i class="bi bi-camera"></i>
-            Capturar Imagen
-        </button>
-        <button class="control-btn btn-secondary" onclick="toggleFullscreen()">
-            <i class="bi bi-fullscreen"></i>
-            Pantalla Completa
-        </button>
-    </div>
-
-    <div class="info-panel">
-        <div class="info-card">
-            <div class="info-card-title">Estado de la cámara</div>
-            <div class="info-card-value" id="cameraStatus">Desconectada</div>
+    <!-- Panel de Chat de Reconocimiento -->
+    <div class="chat-panel">
+        <div class="chat-header">
+            <i class="bi bi-person-check"></i>
+            <div>
+                <h3>Reconocimientos en Tiempo Real</h3>
+                <div class="chat-status">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Esperando reconocimientos...</span>
+                </div>
+            </div>
         </div>
-        <div class="info-card">
-            <div class="info-card-title">Resolución</div>
-            <div class="info-card-value" id="resolution">1920x1080</div>
-        </div>
-        <div class="info-card">
-            <div class="info-card-title">FPS</div>
-            <div class="info-card-value" id="fps">30</div>
-        </div>
-        <div class="info-card">
-            <div class="info-card-title">Última captura</div>
-            <div class="info-card-value" id="lastCapture">-</div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-empty">
+                <i class="bi bi-eye"></i>
+                <h4>Sin reconocimientos aún</h4>
+                <p>Los reconocimientos aparecerán aquí en tiempo real</p>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-let stream = null;
+let lastRecognitionId = 0;
+let isPolling = false;
+let totalRecognitions = 0;
 
 // Actualizar reloj
 function updateTime() {
@@ -248,84 +442,111 @@ function updateTime() {
 setInterval(updateTime, 1000);
 updateTime();
 
-// // Iniciar cámara
-// async function startCamera() {
-//     try {
-//         stream = await navigator.mediaDevices.getUserMedia({ 
-//             video: { 
-//                 width: { ideal: 1920 },
-//                 height: { ideal: 1080 }
-//             }, 
-//             audio: false 
-//         });
-        
-//         const videoFeed = document.getElementById('videoFeed');
-//         const noCamera = document.getElementById('noCamera');
-        
-//         videoFeed.srcObject = stream;
-//         videoFeed.style.display = 'block';
-//         noCamera.style.display = 'none';
-        
-//         document.getElementById('cameraStatus').textContent = 'Conectada';
-        
-//         // Actualizar información de la cámara
-//         const videoTrack = stream.getVideoTracks()[0];
-//         const settings = videoTrack.getSettings();
-//         document.getElementById('resolution').textContent = `${settings.width}x${settings.height}`;
-//         document.getElementById('fps').textContent = settings.frameRate || 30;
-        
-//     } catch (error) {
-//         console.error('Error al acceder a la cámara:', error);
-//         alert('No se pudo acceder a la cámara. Verifica los permisos.');
-//     }
-// }
+// Long Polling para reconocimientos
+async function pollRecognitions() {
+    if (isPolling) return;
+    isPolling = true;
 
+    while (isPolling) {
+        try {
+            const response = await fetch(`/api/recognition_event?last=${lastRecognitionId}`);
+            const data = await response.json();
+
+            if (data.success && data.nuevo) {
+                lastRecognitionId = data.id;
+                addRecognitionMessage(data.mensaje, data.confidence);
+                totalRecognitions++;
+                document.getElementById('totalRecognitions').textContent = totalRecognitions;
+            }
+        } catch (error) {
+            console.error('Error en long polling:', error);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+}
+
+// Agregar mensaje de reconocimiento al chat
+function addRecognitionMessage(nombre, confidence) {
+    const chatMessages = document.getElementById('chatMessages');
+    const chatEmpty = chatMessages.querySelector('.chat-empty');
+    
+    // Remover mensaje vacío si existe
+    if (chatEmpty) {
+        chatEmpty.remove();
+    }
+
+    // Crear elemento de mensaje
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message';
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('es-ES');
+    
+    // Calcular porcentaje de confianza
+    const confidencePercent = Math.round(confidence || 0);
+    
+    messageDiv.innerHTML = `
+        <div class="message-header">
+            <span class="message-name">👤 ${nombre}</span>
+            <span class="message-time">${timeString}</span>
+        </div>
+        <div class="message-confidence">
+            <span>Confianza: ${confidencePercent}%</span>
+            <div class="confidence-bar">
+                <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+            </div>
+        </div>
+    `;
+    
+    // Añadir al principio del chat
+    chatMessages.insertBefore(messageDiv, chatMessages.firstChild);
+    
+    // Actualizar estado
+    document.getElementById('statusText').textContent = `Último: ${nombre}`;
+    
+    // Limitar a 50 mensajes
+    const messages = chatMessages.querySelectorAll('.chat-message');
+    if (messages.length > 50) {
+        messages[messages.length - 1].remove();
+    }
+}
+
+// Iniciar reconocimiento
 function startRecognition() {
-      fetch('api/api/initrecognition', { method: 'POST' })
-          .then(response => response.json())
-          .then(data => console.log(data))
-          .catch(err => console.error(err));
-  }
+    fetch('/api/api/initrecognition', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Reconocimiento iniciado:', data);
+            // Iniciar polling si no está activo
+            if (!isPolling) {
+                pollRecognitions();
+            }
+        })
+        .catch(err => console.error('Error al iniciar reconocimiento:', err));
+}
 
-  function stopRecognition() {
-      fetch('api/api/stoprecognition', { method: 'POST' })
-          .then(response => response.json())
-          .then(data => console.log(data))
-          .catch(err => console.error(err));
-  }
-
-// // Detener cámara
-// function stopCamera() {
-//     if (stream) {
-//         stream.getTracks().forEach(track => track.stop());
-        
-//         const videoFeed = document.getElementById('videoFeed');
-//         const noCamera = document.getElementById('noCamera');
-        
-//         videoFeed.style.display = 'none';
-//         noCamera.style.display = 'flex';
-        
-//         document.getElementById('cameraStatus').textContent = 'Desconectada';
-//         stream = null;
-//     }
-// }
+// Detener reconocimiento
+function stopRecognition() {
+    fetch('/api/api/stoprecognition', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Reconocimiento detenido:', data);
+            isPolling = false;
+            document.getElementById('statusText').textContent = 'Reconocimiento detenido';
+        })
+        .catch(err => console.error('Error al detener reconocimiento:', err));
+}
 
 // Capturar imagen
 function takeSnapshot() {
-    if (!stream) {
-        alert('Primero inicia la cámara');
-        return;
-    }
-    
     const video = document.getElementById('videoFeed');
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.naturalWidth || 1920;
+    canvas.height = video.naturalHeight || 1080;
     
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0);
     
-    // Convertir a blob y descargar
     canvas.toBlob(blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -333,9 +554,6 @@ function takeSnapshot() {
         a.download = `captura_${new Date().getTime()}.jpg`;
         a.click();
         URL.revokeObjectURL(url);
-        
-        const now = new Date();
-        document.getElementById('lastCapture').textContent = now.toLocaleTimeString('es-ES');
     }, 'image/jpeg');
 }
 
@@ -352,22 +570,10 @@ function toggleFullscreen() {
     }
 }
 
-// Si quieres cargar un stream de video desde una URL (como una cámara IP o stream RTSP):
-// Descomenta y adapta esta función según tu configuración
-/*
-function loadVideoStream(url) {
-    const videoFeed = document.getElementById('videoFeed');
-    const noCamera = document.getElementById('noCamera');
-    
-    videoFeed.src = url;
-    videoFeed.style.display = 'block';
-    noCamera.style.display = 'none';
-    
-    document.getElementById('cameraStatus').textContent = 'Conectada (Stream)';
-}
-
-// Ejemplo de uso:
-// loadVideoStream('http://tu-camara-ip/stream');
-*/
+// Iniciar polling automáticamente al cargar la página
+window.addEventListener('load', () => {
+    console.log('Iniciando long polling de reconocimientos...');
+    pollRecognitions();
+});
 </script>
 {% endblock %}
