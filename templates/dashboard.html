@@ -145,9 +145,10 @@
     <table id="tablaEmpleados" class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Nombre Empleado</th>
+                <th>Nombre</th>
+                <th>DNI</th>
                 <th>Email</th>
-                <th>Jornada (horas)</th>
+                <th>Jornada</th>
                 <th>Progreso</th>
                 <th>Estado</th>
             </tr>
@@ -175,7 +176,7 @@ function limpiarFilaVacia() {
 }
 
 // Función para agregar un empleado NUEVO
-function agregarEmpleado(nombre, email, jornada, horas, estado) {
+function agregarEmpleado(nombre,dni, email, jornada, horas, estado) {
     console.log(`[UI] ➕ Agregando empleado: ${nombre}`);
     limpiarFilaVacia();
     const tbody = document.querySelector("#tablaEmpleados tbody");
@@ -191,13 +192,14 @@ function agregarEmpleado(nombre, email, jornada, horas, estado) {
     
     const colores = {
         "trabajando": "yellow",
-        "no_entro": "red",
+        "out": "red",
         "completado": "green"
     };
     const color = colores[estado] || "gray";
 
     fila.innerHTML = `
         <td>${nombre}</td>
+        <td>${dni}</td>
         <td>${email}</td>
         <td>${jornada}</td>
         <td>
@@ -233,7 +235,7 @@ function actualizarEmpleado(email, horas, estado) {
     
     const colores = {
         "trabajando": "yellow",
-        "no_entro": "red",
+        "out": "red",
         "completado": "green"
     };
     const color = colores[estado] || "gray";
@@ -269,7 +271,7 @@ async function cargarEmpleadosInicial() {
                 `;
             } else {
                 data.empleados.forEach(emp => {
-                    agregarEmpleado(emp.nombre, emp.email, emp.jornada, emp.horas, emp.estado);
+                    agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
                 });
             }
             
@@ -328,7 +330,7 @@ async function esperarCambios() {
             if (data.tipo === 'nuevo') {
                 const emp = data.empleado;
                 console.log('[CLIENTE] ➕ Procesando empleado nuevo:', emp);
-                agregarEmpleado(emp.nombre, emp.email, emp.jornada, emp.horas, emp.estado);
+                agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
             } else if (data.tipo === 'actualizado') {
                 const emp = data.empleado;
                 console.log('[CLIENTE] 🔄 Procesando actualización:', emp);

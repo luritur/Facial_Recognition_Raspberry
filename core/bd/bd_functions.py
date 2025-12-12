@@ -1,3 +1,6 @@
+
+
+
 # db.py
 
 from flask import current_app
@@ -17,9 +20,9 @@ def agregar_empleado(dni, nombre, email, jornada, path_image, horas=0, estado='o
     """Agrega un nuevo empleado a la DB"""
 
     with current_app.app_context():
-        existe = Empleado.query.filter_by(email=email).first()
+        existe = Empleado.query.filter_by(dni=dni).first()
         if existe:
-            print(f"[DB] ⚠️ Empleado {email} ya existe")
+            print(f"[DB] ⚠️ Empleado {dni} ya existe")
             return
         nuevo = Empleado(
             dni = dni,  
@@ -34,12 +37,30 @@ def agregar_empleado(dni, nombre, email, jornada, path_image, horas=0, estado='o
         db.session.commit()
         print(f"[DB] ➕ Empleado {nombre} agregado")
 
-def obtener_empleados():
-    """Devuelve todos los empleados"""
+def obtener_empleados_lista():
+    """Devuelve los empleados como una lista de diccionarios"""
+    empleados = []
     with current_app.app_context():
-        return Empleado.query.all()
-    
+        for emp in Empleado.query.all():
+            empleados.append({
+                'nombre': emp.nombre,
+                'dni': emp.dni,
+                'email': emp.email,
+                'jornada': emp.jornada,
+                'estado': emp.estado,
+                'horas': emp.horas
+            })
+    return empleados
 
+def get_empleado_data(dni):
+
+    with current_app.app_context():
+        empleado = Empleado.query.filter_by(dni=dni).first()
+        nombre = empleado.nombre
+        email = empleado.email
+        jornada = empleado.jornada
+        return nombre, email, jornada
+    
 def empleado_exist(dni):
     """
     Retorna True si el empleado existe, False si no.
@@ -78,11 +99,3 @@ def borrar_empleado(dni):
         print(f"[DB] ❌ Empleado {dni} eliminado")
 
 
-# -------------------------
-# Prueba rápida
-# -------------------------
-if __name__ == "__main__":
-    crear_base_datos()
-    agregar_empleado("Pepito Grillo", "pepito@example.com", 8)
-    empleados = obtener_empleados()
-    print("[DB] Empleados en DB:", empleados)

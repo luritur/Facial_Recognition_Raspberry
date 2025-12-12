@@ -1,6 +1,6 @@
 from flask import Flask, render_template, Blueprint
 import os
-
+from core.bd.bd_functions import obtener_empleados_lista
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -20,19 +20,8 @@ def dashboard():
 @main_bp.route('/registro_empleados')
 def registro_empleados():
     # Cargar empleados registrados desde la carpeta de registro
-    empleados = []
-    
-    if os.path.exists(PATH_REGISTER):
-        for carpeta in os.listdir(PATH_REGISTER):
-            carpeta_path = os.path.join(PATH_REGISTER, carpeta)
-            if os.path.isdir(carpeta_path):
-                # El nombre de la carpeta es el nombre del empleado
-                empleados.append({
-                    'name': carpeta,
-                    'dni': 'N/A',  # Aquí deberías guardar el DNI en algún lado
-                })
-    
-    return render_template('registro_empleados.html', employees=empleados)
+   
+    return render_template('registro_empleados.html', employees=obtener_empleados_lista())
 
 @main_bp.route('/base')
 def navegar():

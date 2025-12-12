@@ -8,8 +8,8 @@ from core.queues.colas import show_queue
 
 def borrar_contenido_carpeta(ruta):
     # Borra todo el contenido de la carpeta, incluyendo subcarpetas y archivos
-    for nombre in os.listdir(ruta):
-        path = os.path.join(ruta, nombre)
+    for dn in os.listdir(ruta):
+        path = os.path.join(ruta, dn)
         if os.path.isfile(path) or os.path.islink(path):
             os.remove(path)
         elif os.path.isdir(path):
@@ -31,7 +31,7 @@ def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
     return None
 
 
-def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
+def camara_run(frames, duracion,path, camera_index, dni_persona=None):  #FALTA DECIDIR Y PROGRAMAR CUANTOS FRAMES SE VAN A GUARDAR EN LA COLA
     cap = _open_camera_with_retries(camera_index, retries=4, delay=0.8)
     if cap is None:
         print(f"ERROR: No se pudo abrir la camara index={camera_index} tras varios intentos")
@@ -43,9 +43,9 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
         frames_put=1
         consecutive_failures = 0
         MAX_CONSECUTIVE_FAILURES = 6
-        if nombre_persona is not None:
+        if dni_persona is not None:
             # Crear carpeta de la persona
-            carpeta_persona = os.path.join(path, nombre_persona)
+            carpeta_persona = os.path.join(path, dni_persona)
             os.makedirs(carpeta_persona, exist_ok=True)
             minimo_una_cara_detectada = None
 
@@ -76,9 +76,9 @@ def camara_run(frames, duracion,path, camera_index, nombre_persona=None):  #FALT
                     
 
             if(minimo_una_cara_detectada):
-                print(f"Registro completado para {nombre_persona}")
+                print(f"Registro completado para {dni_persona}")
             else: 
-                print(f"No se ha detectado ninguna cara {nombre_persona}")
+                print(f"No se ha detectado ninguna cara {dni_persona}")
 
         else: 
             # if "frames" in path:
