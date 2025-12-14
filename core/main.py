@@ -12,6 +12,7 @@ import core.recognition.recognition as recognition
 import core.camera.camera as camera
 import core.queues.colas as queue 
 import core.recognition.train_LBPH as train
+
 from core.control import hilos_activos
 from core.control import stop_event
 import core.control as control
