@@ -554,19 +554,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    if (data.es_ultimo) {
-                        // Mostrar advertencia especial para último empleado
-                        alert(
-                            '⚠️ ATENCIÓN - ÚLTIMO EMPLEADO ELIMINADO\n\n' +
-                            data.warning + '\n\n' +
-                            '🔴 ACCIONES NECESARIAS:\n' +
-                            '1. Registra al menos un empleado nuevo\n' +
-                            '2. Entrena el modelo con el botón 🤖\n' +
-                            '3. El reconocimiento NO funcionará hasta que entrenes el modelo'
-                        );
-                    } else {
-                        alert('✅ Empleado eliminado correctamente');
-                    }
                     location.reload();
                 } else {
                     alert('❌ Error al eliminar: ' + data.message);
@@ -705,23 +692,136 @@ function openModal() {
     resetModal();
 }
 
-function entrenarModelo(){
+function entrenarModelo() {
+    if (!confirm('¿Iniciar entrenamiento del modelo?\n\nEsto puede tardar unos minutos.')) {
+        return;
+    }
+    
+    // Mostrar modal de progreso
+    mostrarModalProgreso();
+    
     fetch('api/api/entrenarModelo', { method: 'POST' })
         .then(response => {
             if (!response.ok) {
-                // Respuesta 400 o similar
                 return response.json().then(data => { throw data });
             }
             return response.json();
         })
         .then(data => {
             console.log('OK:', data);
-            alert('✅ Entrenamiento del modelo iniciado');
+            // Iniciar polling de progreso
+            iniciarPollingProgreso();
         })
         .catch(err => {
             console.error('Error:', err);
+            cerrarModalProgreso();
             alert('❌ No hay empleados registrados con los que entrenar el modelo');
         });
+}
+
+function mostrarModalProgreso() {
+    // Crear modal si no existe
+    if (!document.getElementById('modalProgreso')) {
+        const modalHTML = `
+            <div id="modalProgreso" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            ">
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 12px;
+                    min-width: 400px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                ">
+                    <h3 style="margin: 0 0 20px 0; color: #2c3e50;">🤖 Entrenando Modelo</h3>
+                    <div id="mensajeProgreso" style="
+                        margin-bottom: 15px;
+                        color: #6c757d;
+                        font-size: 0.95rem;
+                    ">Iniciando...</div>
+                    <div style="
+                        width: 100%;
+                        height: 30px;
+                        background: #e9ecef;
+                        border-radius: 15px;
+                        overflow: hidden;
+                        position: relative;
+                    ">
+                        <div id="barraProgreso" style="
+                            height: 100%;
+                            background: linear-gradient(90deg, #3498db, #2980b9);
+                            width: 0%;
+                            transition: width 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 0.85rem;
+                        ">0%</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    document.getElementById('modalProgreso').style.display = 'flex';
+}
+
+function cerrarModalProgreso() {
+    const modal = document.getElementById('modalProgreso');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function iniciarPollingProgreso() {
+    const intervalo = setInterval(() => {
+        fetch('/api/api/entrenamiento/progreso')
+            .then(response => response.json())
+            .then(data => {
+                const barra = document.getElementById('barraProgreso');
+                const mensaje = document.getElementById('mensajeProgreso');
+                
+                if (barra && mensaje) {
+                    barra.style.width = data.progreso + '%';
+                    barra.textContent = data.progreso + '%';
+                    mensaje.textContent = data.mensaje;
+                }
+                
+                // Si terminó o hubo error
+                if (!data.entrenando) {
+                    clearInterval(intervalo);
+                    
+                    if (data.progreso === 100) {
+                        // Éxito
+                        setTimeout(() => {
+                            cerrarModalProgreso();
+                            alert('✅ Modelo entrenado correctamente\n\nYa puedes usar el reconocimiento facial.');
+                            location.reload();
+                        }, 1500);
+                    } else if (data.progreso === -1) {
+                        // Error
+                        cerrarModalProgreso();
+                        alert('❌ Error en el entrenamiento:\n' + data.mensaje);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Error en polling:', err);
+                clearInterval(intervalo);
+                cerrarModalProgreso();
+            });
+    }, 500); // Actualizar cada 500ms
 }
 
 

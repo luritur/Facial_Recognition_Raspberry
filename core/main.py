@@ -129,17 +129,42 @@ def run_entrenar_modelo_thread():
         
 
 def train_model():
-    print("🔄 Entrenando modelo...")
+    import core.control as control
     
-    config.xml = train.trainLBPH(PATH_REGISTER)
-    
-    config.recognizer = cv2.face.LBPHFaceRecognizer_create()
-    config.recognizer.read(config.xml)
-    config.names_labels = detection.namesToDictionary(PATH_REGISTER) 
-    control.entrenando_modelo = False
-
-    print(f"MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {config.names_labels}")
-    print("=== REGISTRO COMPLETADO ===\n")
+    try:
+        control.entrenamiento_progreso = 0
+        control.entrenamiento_mensaje = "Iniciando entrenamiento..."
+        print("🔄 Entrenando modelo...")
+        
+        control.entrenamiento_progreso = 20
+        control.entrenamiento_mensaje = "Cargando imágenes de empleados..."
+        time.sleep(0.5)  # Pequeña pausa para que se vea el progreso
+        
+        config.xml = train.trainLBPH(PATH_REGISTER)
+        
+        control.entrenamiento_progreso = 70
+        control.entrenamiento_mensaje = "Creando modelo de reconocimiento..."
+        time.sleep(0.3)
+        
+        config.recognizer = cv2.face.LBPHFaceRecognizer_create()
+        config.recognizer.read(config.xml)
+        config.names_labels = detection.namesToDictionary(PATH_REGISTER)
+        
+        control.entrenamiento_progreso = 100
+        control.entrenamiento_mensaje = "¡Entrenamiento completado!"
+        
+        print(f"✅ MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {config.names_labels}")
+        print("=== REGISTRO COMPLETADO ===\n")
+        
+        # Mantener el mensaje de completado por 2 segundos
+        time.sleep(2)
+        
+    except Exception as e:
+        control.entrenamiento_progreso = -1
+        control.entrenamiento_mensaje = f"Error: {str(e)}"
+        print(f"❌ Error en entrenamiento: {e}")
+    finally:
+        control.entrenando_modelo = False
 
 
 en_ejecucion = False
