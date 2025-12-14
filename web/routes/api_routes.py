@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify, request
 import time
 import threading
 from core.control import stop_event
-import os
 
 # Importar módulos de tu código existente
 from core.main import ejecutar_run
@@ -14,7 +13,6 @@ from core.main import run_entrenar_modelo_thread
 # from core.gestion.gestion_empleados import get_empleados_registrados
 import core.gestion.gestion_empleados as gestion_empleados
 from core.bd.bd_functions import obtener_empleados_lista
-import config
 
 
 # Variables globales para gestión de estado
@@ -37,38 +35,10 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
-    if config.recognizer is None or config.names_labels is None:
-        return jsonify({
-            "status": "error",
-            "message": "No hay modelo entrenado. Registra empleados y entrena el modelo primero.",
-            "notification": {
-                "type": "error",
-                "title": "Modelo no disponible",
-                "message": "Debes entrenar el modelo antes de iniciar el reconocimiento"
-            }
-        }), 400
-    empleados = obtener_empleados_lista()
-    if not empleados:
-        return jsonify({
-            "status": "error",
-            "message": "No hay empleados registrados",
-            "notification": {
-                "type": "error",
-                "title": "Sin empleados",
-                "message": "Registra al menos un empleado antes de iniciar el reconocimiento"
-            }
-        }), 400
-    
     ejecutar_run()
-
     return jsonify({
         "status": "ok",
-        "message": "Reconocimiento iniciado",
-        "notification": {
-            "type": "success",
-            "title": "Reconocimiento iniciado",
-            "message": f"Sistema activo. {len(empleados)} empleado(s) en la base de datos"
-        }
+        "message": "Reconocimiento iniciado"
     })
 
 @api_bp.route('/api/stoprecognition', methods=['POST'])
@@ -76,12 +46,7 @@ def detectar_stop():
     detener_run()
     return jsonify({
         "status": "ok",
-        "message": "Reconocimiento detenido",
-        "notification": {
-            "type": "info",
-            "title": "Reconocimiento detenido",
-            "message": "El sistema de reconocimiento facial ha sido detenido"
-        }
+        "message": "Reconocimiento detenido"
     })
 
 
@@ -188,12 +153,7 @@ def api_entrenarModelo():
     if not empleados:   # Esto cubre None o lista vacía
         return jsonify({
             'status': 'error',
-            'message': 'No habría empleados para entrenar el modelo',
-            'notification': {
-                'type': 'error',
-                'title': 'Sin empleados',
-                'message': 'Registra al menos un empleado antes de entrenar el modelo'
-            }
+            'message': 'No habría empleados para entrenar el modelo'
         }), 400
 
     # Si sí hay empleados, entrenar
@@ -201,29 +161,9 @@ def api_entrenarModelo():
 
     return jsonify({
         'status': 'ok',
-        'message': 'Modelo entrenado',
-        'notification': {
-            'type': 'success',
-            'title': 'Entrenamiento iniciado',
-            'message': f'Entrenando modelo con {len(empleados)} empleado(s). Esto puede tomar unos segundos...'
-        }
+        'message': 'Modelo entrenado'
     })
 
-@api_bp.route('/api/modelo_status', methods=['GET'])
-def api_modelo_status():
-    """Obtiene el estado del modelo y el entrenamiento"""
-    import core.control as control
-    
-    tiene_modelo = config.recognizer is not None and config.names_labels is not None
-    entrenando = control.entrenando_modelo
-    num_empleados = len(obtener_empleados_lista())
-    
-    return jsonify({
-        'tiene_modelo': tiene_modelo,
-        'entrenando': entrenando,
-        'num_empleados': num_empleados,
-        'empleados_registrados': config.names_labels if config.names_labels else {}
-    })
 
 ############################################################
 
@@ -254,54 +194,31 @@ def obtener_empleados():
 
 @api_bp.route('/empleados/esperar-cambios', methods=['GET'])
 def esperar_cambios():
-    """Long polling UNIFICADO: espera cambios de cualquier tipo"""
+    """Long polling: espera hasta que haya cambios"""
     version_actual = int(request.args.get('version', 0))
     timeout = 30
     inicio = time.time()
     
-    print(f"[LONG POLLING] 🔍 Cliente esperando cambios. Versión cliente: {version_actual}")
-    print(f"[LONG POLLING] 📊 Versión servidor: {gestion_empleados.empleados_version}")
+    print(f"[LONG POLLING] 🔍 Cliente esperando cambios. Versión actual: {version_actual}")
+    print(f"[LONG POLLING] 📊 Versión del servidor: {gestion_empleados.empleados_version}")
     
-    with gestion_empleados.empleados_condition:
-        # Si ya hay cambios disponibles, responder inmediatamente
-        if gestion_empleados.empleados_version > version_actual:
-            print(f"[LONG POLLING] ⚡ Cambio ya disponible!")
-            if gestion_empleados.ultimo_cambio:
-                print(f"[LONG POLLING] 📦 Tipo: {gestion_empleados.ultimo_cambio['tipo']}")
-            
-            return jsonify({
-                'success': True,
-                'cambio': True,
-                'version': gestion_empleados.empleados_version,
-                'tipo': gestion_empleados.ultimo_cambio['tipo'] if gestion_empleados.ultimo_cambio else 'desconocido',
-                'empleado': gestion_empleados.ultimo_cambio['empleado'] if gestion_empleados.ultimo_cambio else {}
-            })
-        
-        # No hay cambios aún, esperar con timeout
-        tiempo_restante = timeout
-        while tiempo_restante > 0:
-            # wait() libera el lock y espera señal o timeout
-            señal_recibida = gestion_empleados.empleados_condition.wait(timeout=tiempo_restante)
-            
-            # Si se recibió señal y hay cambios
+    while (time.time() - inicio) < timeout:
+        with gestion_empleados.empleados_lock:
             if gestion_empleados.empleados_version > version_actual:
-                print(f"[LONG POLLING] 🎉 ¡Cambio detectado por señal!")
-                if gestion_empleados.ultimo_cambio:
-                    print(f"[LONG POLLING] 📦 Tipo: {gestion_empleados.ultimo_cambio['tipo']}")
+                print(f"[LONG POLLING] 🎉 ¡Cambio detectado! {gestion_empleados.empleados_version} > {version_actual}")
+                print(f"[LONG POLLING] 📦 Enviando: {gestion_empleados.ultimo_cambio}")
                 
                 return jsonify({
                     'success': True,
                     'cambio': True,
                     'version': gestion_empleados.empleados_version,
-                    'tipo': gestion_empleados.ultimo_cambio['tipo'] if gestion_empleados.ultimo_cambio else 'desconocido',
-                    'empleado': gestion_empleados.ultimo_cambio['empleado'] if gestion_empleados.ultimo_cambio else {}
+                    'tipo': gestion_empleados.ultimo_cambio['tipo'],
+                    'empleado': gestion_empleados.ultimo_cambio['empleado']
                 })
-            
-            # Actualizar tiempo restante
-            tiempo_restante = timeout - (time.time() - inicio)
+        
+        time.sleep(0.5)
     
-    # Timeout sin cambios
-    print(f"[LONG POLLING] ⏰ Timeout (30s). Sin cambios.")
+    print(f"[LONG POLLING] ⏰ Timeout. No hubo cambios.")
     return jsonify({
         'success': True,
         'cambio': False,
@@ -318,44 +235,13 @@ def api_delete_employee():
     dni = data.get('dni', '').strip()
     from core.bd.bd_functions import borrar_empleado
     try:
-        # Verificar cuántos empleados quedan
-        empleados = obtener_empleados_lista()
-        es_ultimo = len(empleados) == 1
-        
         borrar_empleado(dni)
-        
-        # Si era el último empleado, enviar notificación especial
-        if es_ultimo:
-            return jsonify({
-                'status': 'ok',
-                'message': 'Último empleado eliminado',
-                'notification': {
-                    'type': 'warning',
-                    'title': 'Último empleado eliminado',
-                    'message': 'El modelo ha sido eliminado. Deberás entrenar el modelo nuevamente cuando registres nuevos empleados.'
-                }
-            }), 200
-        
-        return jsonify({
-            'status': 'ok',
-            'message': 'Empleado eliminado',
-            'notification': {
-                'type': 'success',
-                'title': 'Empleado eliminado',
-                'message': 'El empleado ha sido eliminado correctamente. Recuerda entrenar el modelo nuevamente.'
-            }
-        }), 200
-        
+        return jsonify({'status': 'ok', 'message': 'Empleado eliminado'}), 200
     except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e),
-            'notification': {
-                'type': 'error',
-                'title': 'Error al eliminar',
-                'message': f'No se pudo eliminar el empleado: {str(e)}'
-            }
-        }), 500
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+
+
 
 @api_bp.route('/api/cancelar_registro', methods=['POST'])
 def cancelar_registro():
@@ -381,7 +267,7 @@ def recognition_event():
     print(f"[RECOGNITION POLLING] 🧠 Último ID del servidor: {gestion_empleados.ultimo_id_reconocimiento}")
 
     while (time.time() - start) < timeout:
-        with gestion_empleados.empleados_condition:  
+        with gestion_empleados.empleados_lock:  
             if gestion_empleados.ultimo_id_reconocimiento > last_client_id:
                 print(f"[RECOGNITION POLLING] 🎉 Nuevo reconocimiento detectado!")
                 print(f"[RECOGNITION POLLING] 📢 Mensaje: {gestion_empleados.ultima_persona_reconocida}")
@@ -405,7 +291,7 @@ def recognition_event():
         'id': last_client_id
     })
 
-'''
+
 @api_bp.route('/api/empleados_estado_actualizar', methods=['GET'])
 def empleados_estado_actualizar():
     """
@@ -416,4 +302,3 @@ def empleados_estado_actualizar():
         'version': gestion_empleados.empleados_version,
         'ultimo_cambio': gestion_empleados.ultimo_cambio
     })
-'''

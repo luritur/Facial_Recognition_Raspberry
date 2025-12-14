@@ -45,56 +45,46 @@ def gen_frames():
     
     sin_frames_contador = 0
     
-    try:  # ← NUEVO: try exterior para capturar GeneratorExit
-        while True:
-            try:
-                # Intentar obtener frame con timeout de 0.5 segundos
-                # Si la cola está vacía, lanza excepción Empty
-                frame = show_queue.get(timeout=0.05)
-                ultimo_frame = frame
-                sin_frames_contador = 0  # Resetear contador
-                
-            except Empty:
-                # No hay frames disponibles - usar placeholder
-                sin_frames_contador += 1
-                
-                # Después de 3 intentos fallidos, mostrar placeholder
-                if sin_frames_contador > 3:
-                    frame = frame_placeholder
-                else:
-                    # Mantener último frame válido brevemente
-                    frame = ultimo_frame
-                
-            except Exception as e:
-                # Cualquier otro error - usar último frame válido
-                print(f"[VIDEO_FEED] ⚠️ Error obteniendo frame: {e}")
+    while True:
+        try:
+            # Intentar obtener frame con timeout de 0.5 segundos
+            # Si la cola está vacía, lanza excepción Empty
+            frame = show_queue.get(timeout=0.05)
+            ultimo_frame = frame
+            sin_frames_contador = 0  # Resetear contador
+            
+        except Empty:
+            # No hay frames disponibles - usar placeholder
+            sin_frames_contador += 1
+            
+            # Después de 3 intentos fallidos, mostrar placeholder
+            if sin_frames_contador > 3:
+                frame = frame_placeholder
+            else:
+                # Mantener último frame válido brevemente
                 frame = ultimo_frame
+            
+        except Exception as e:
+            # Cualquier otro error - usar último frame válido
+            print(f"[VIDEO_FEED] ⚠️ Error obteniendo frame: {e}")
+            frame = ultimo_frame
 
-            # Codificar frame a JPEG
-            try:
-                ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-                if not ret:
-                    print("[VIDEO_FEED] ❌ Error codificando frame")
-                    continue
-
-                frame_bytes = buffer.tobytes()
-                
-                # Formato MJPEG para streaming HTTP
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                       
-            except GeneratorExit:  # ← NUEVO: Captura específica para desconexión
-                print("[VIDEO_FEED] 🔌 Cliente desconectado")
-                break  # ← NUEVO: Salir del bucle elegantemente
-                       
-            except Exception as e:
-                print(f"[VIDEO_FEED] ❌ Error en yield: {e}")
+        # Codificar frame a JPEG
+        try:
+            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            if not ret:
+                print("[VIDEO_FEED] ❌ Error codificando frame")
                 continue
-                
-    except GeneratorExit:  # ← NUEVO: Captura exterior por si acaso
-        print("[VIDEO_FEED] 🛑 Stream cerrado")
-    finally:  # ← NUEVO: Limpieza garantizada
-        print("[VIDEO_FEED] 🧹 Recursos liberados")
+
+            frame_bytes = buffer.tobytes()
+            
+            # Formato MJPEG para streaming HTTP
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                   
+        except Exception as e:
+            print(f"[VIDEO_FEED] ❌ Error en yield: {e}")
+            continue
 
 @video_bp.route('/video_feed')
 def video_feed():

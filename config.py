@@ -53,8 +53,6 @@ class Config:
     # Ruta de la base de datos SQLite
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'empleados.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'clave-secreta-para-desarrollo-cambiar-en-produccion'
-
 
 xml = None
 recognizer = None
