@@ -395,8 +395,8 @@
                 <div class="info-card-value" id="resolution">1920x1080</div>
             </div>
             <div class="info-card">
-                <div class="info-card-title">FPS</div>
-                <div class="info-card-value" id="fps">30</div>
+                <div class="info-card-title">Timeout</div>
+                <div class="info-card-value" id="timeout">10 segundos</div>
             </div>
             <div class="info-card">
                 <div class="info-card-title">Reconocimientos</div>
@@ -454,6 +454,7 @@ async function pollRecognitions() {
 
             if (data.success && data.nuevo) {
                 lastRecognitionId = data.id;
+                localStorage.setItem('lastRecognitionId', lastRecognitionId);
                 addRecognitionMessage(data.mensaje, data.confidence);
                 totalRecognitions++;
                 document.getElementById('totalRecognitions').textContent = totalRecognitions;
@@ -522,6 +523,10 @@ function startRecognition() {
         })
         .then(data => {
             console.log('Reconocimiento iniciado:', data);
+            if (data.current_id !== undefined) {
+                lastRecognitionId = data.current_id;
+                console.log(`📍 Sincronizado con servidor. Último ID: ${lastRecognitionId}`);
+            }
             // Iniciar polling si no está activo
             if (!isPolling) {
                 pollRecognitions();
@@ -579,9 +584,8 @@ function toggleFullscreen() {
 }
 
 // Iniciar polling automáticamente al cargar la página
-window.addEventListener('load', () => {
-    console.log('Iniciando long polling de reconocimientos...');
-    pollRecognitions();
-});
+
+console.log('Iniciando long polling de reconocimientos...');
+    
 </script>
 {% endblock %}
