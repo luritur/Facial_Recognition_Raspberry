@@ -86,31 +86,19 @@ def empleado_exist(dni):
         # Si empleado no es None, es que existe
         return empleado is not None
 
-def actualizar_empleado(email=None, dni=None, horas=None, estado=None):
+def actualizar_empleado(email, horas=None, estado=None):
     """Actualiza horas y/o estado de un empleado"""
     with current_app.app_context():
-        # Buscar por DNI o por email
-        if dni:
-            emp = Empleado.query.filter_by(dni=dni).first()
-            identificador = f"DNI {dni}"
-        elif email:
-            emp = Empleado.query.filter_by(email=email).first()
-            identificador = f"email {email}"
-        else:
-            print(f"[DB] ⚠️ Debe proporcionar email o DNI")
-            return False
+        emp = Empleado.query.filter_by(email=email).first()
         if not emp:
-            print(f"[DB] ⚠️ Empleado con {identificador} no encontrado")
-            return False
-            
+            print(f"[DB] ⚠️ Empleado {email} no encontrado")
+            return
         if horas is not None:
             emp.horas = horas
         if estado is not None:
             emp.estado = estado
-            
         db.session.commit()
-        print(f"[DB] 🔄 Empleado {emp.dni} actualizado - Estado: {estado}")
-        return True
+        print(f"[DB] 🔄 Empleado {email} actualizado")
 
 def borrar_empleado(dni):
 

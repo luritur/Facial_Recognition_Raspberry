@@ -9,43 +9,29 @@ from core.control import stop_event
 from core.gestion.gestion_empleados import registrar_reconocimiento
 import time
 from core.gestion.gestion_empleados import notificar_empleado_actualizado
-from core.bd.bd_functions import actualizar_empleado 
-from flask import current_app
-
 frames = queue.detected
-THRESHOLD = 85  # Ajusta según los resultados que veas
+THRESHOLD = 85  # Ajusta segun los resultados que veas
 
-# Guardamos cuando se ha reconocido a cada persona para evitar que se reconozca muchas veces en el mismo segundo
+#guardamos cuando se ha reconocido a cada persona para evitar que se reconozca muchas veces en el mismo segundo (q solo cambie de estado cuando tenga sentido)
 estado_empleados = {}          
 ultimo_timestamp = {}          
 TIEMPO_MINIMO = 10
 
-def recognition_run(recognizer, names_labels, app=None):
-    """
-    :param app: Instancia de la aplicación Flask (necesaria para el contexto)
-    """
-    # Si no se pasa app, intentar obtenerla del current_app
-    if app is None:
-        try:
-            app = current_app._get_current_object()
-        except RuntimeError:
-            print("ERROR: No se puede obtener app. Debes pasar la instancia de Flask al hilo.")
-            return
-    
-    label_name = {value: key for key, value in names_labels.items()}
+def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el bucle
+    label_name = {value: key for key, value in names_labels.items()} #invertir el diccionario
     print("reconociendo...")
     print(f"Personas registradas: {label_name}")
-    
     while not stop_event.is_set():
         ahora = time.time()
 
-        # Coger el frame de la cola frames 
+        #coger el frame de la cola frames 
+        #reconocer el frame 
         face_gray = queue.detected.get() 
-        
-        # Redimensionar para consistencia (IMPORTANTE)
-        face_resized = cv2.resize(face_gray, (100, 100))
+        # 2. Redimensionar para consistencia (IMPORTANTE)
+        face_resized = cv2.resize(face_gray, (100, 100))  # âñADIDO
 
-        # Recognize the face using the trained model
+        # Recognize and label the faces
+         # Recognize the face using the trained model
         label, confidence = recognizer.predict(face_resized)
 
         # Si nunca ha sido visto antes:
@@ -58,32 +44,24 @@ def recognition_run(recognizer, names_labels, app=None):
 
         ultimo_timestamp[label_name[label]] = ahora
 
-        # DEBUG: Imprimir SIEMPRE los valores
-        print(f"Label: {label_name[label]}, Confidence: {confidence:.2f}")
-        
+        # 4. DEBUG: Imprimir SIEMPRE los valores
+        print(f"Label: {label_name[label]}, Confidence: {confidence:.2f}")   #(para ver los thresholds y poder cambiar luego el if)
+        #print(confidence)
         if confidence < THRESHOLD:  
-            dni = label_name[label]
-            estado_actual = estado_empleados.get(dni, "out")
+            estado_actual = estado_empleados.get(label_name[label], "out")
 
             if estado_actual == "out":
                 # Cambia OUT → WORKING
-                nuevo_estado = "trabajando"
-                estado_empleados[dni] = "trabajando"
-            elif estado_actual == "trabajando":
+                estado_empleados[label_name[label]] = "working"
+                
+            elif estado_actual == "working":
                 # Cambia WORKING → OUT
-                nuevo_estado = "out"
-                estado_empleados[dni] = "out"
-            
-            # IMPORTANTE: Usar app_context dentro del hilo
-            with app.app_context():
-                if actualizar_empleado(dni=dni, estado=nuevo_estado):
-                    registrar_reconocimiento(dni, confidence)
-                    notificar_empleado_actualizado(dni, nuevo_estado)
-                    print(f"✅ Reconocido: {dni} - Nuevo estado: {nuevo_estado}")
-                else:
-                    print(f"❌ Error al actualizar estado en BD para {dni}")
+                estado_empleados[label_name[label]] = "out"
+            registrar_reconocimiento(label_name[label], confidence)
+            notificar_empleado_actualizado(label_name[label],estado_empleados[label_name[label]])
+            print(f"✅Se ha reconocido al usuario: {label_name[label]}")
         else:
-            print('❌ No se ha reconocido al usuario')
+            print('❌No se ha reconocido al usuario')
 
 
 
