@@ -170,12 +170,28 @@
                             if (confirmar) {
                                 // Detener reconocimiento y navegar
                                 fetch('/api/api/stoprecognition', { method: 'POST' })
-                                    .then(() => {
-                                        window.location.href = targetUrl;
+                                    .then(response => {
+                                        if (!response.ok) {
+                                            throw new Error('Error al detener reconocimiento');
+                                        }
+                                        return response.json();
+                                    })
+                                    .then(data => {
+                                        console.log('Reconocimiento detenido correctamente:', data);
+                                        // Esperar 500ms para asegurar que los hilos terminaron
+                                        setTimeout(() => {
+                                            window.location.href = targetUrl;
+                                        }, 500);
                                     })
                                     .catch(err => {
                                         console.error('Error deteniendo reconocimiento:', err);
-                                        window.location.href = targetUrl;
+                                        // NO navegar si hubo error
+                                        alert(
+                                            '❌ ERROR al detener el reconocimiento\n\n' +
+                                            'El sistema no pudo detener el reconocimiento correctamente.\n' +
+                                            'Por favor, detén el reconocimiento manualmente con el botón "Detener" antes de cambiar de página.\n\n' +
+                                            'Error: ' + err.message
+                                        );
                                     });
                             }
                         } else {

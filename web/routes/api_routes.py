@@ -37,12 +37,21 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
     global reconocimiento_activo
-    ejecutar_run()
-    reconocimiento_activo=True
-    return jsonify({
-        "status": "ok",
-        "message": "Reconocimiento iniciado"
-    })
+    iniciado = ejecutar_run()
+    
+    if iniciado:
+        reconocimiento_activo = True
+        return jsonify({
+            "status": "ok",
+            "message": "Reconocimiento iniciado"
+        })
+    else:
+        # No se pudo iniciar (no hay modelo, etc.)
+        reconocimiento_activo = False
+        return jsonify({
+            "status": "error",
+            "message": "No se pudo iniciar el reconocimiento. Verifica que el modelo esté entrenado."
+        }), 400
 
 @api_bp.route('/api/stoprecognition', methods=['POST'])
 def detectar_stop():
@@ -267,8 +276,22 @@ def api_delete_employee():
     dni = data.get('dni', '').strip()
     from core.bd.bd_functions import borrar_empleado
     try:
+        # Verificar si es el último empleado ANTES de borrarlo
+        empleados_antes = obtener_empleados_lista()
+        es_ultimo = len(empleados_antes) == 1
+        
         borrar_empleado(dni)
-        return jsonify({'status': 'ok', 'message': 'Empleado eliminado'}), 200
+        
+        respuesta = {
+            'status': 'ok', 
+            'message': 'Empleado eliminado',
+            'es_ultimo': es_ultimo
+        }
+        
+        if es_ultimo:
+            respuesta['warning'] = 'Has eliminado al último empleado. El modelo ha sido eliminado. Necesitas registrar al menos un empleado y entrenar el modelo nuevamente.'
+        
+        return jsonify(respuesta), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     

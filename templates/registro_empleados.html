@@ -545,6 +545,7 @@
         <script>
         function deleteEmployee(dni) {
             if (!confirm('¿Seguro que quieres eliminar este empleado?')) return;
+            
             fetch('/api/api/delete_employee', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -553,13 +554,25 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    alert('Empleado eliminado correctamente');
+                    if (data.es_ultimo) {
+                        // Mostrar advertencia especial para último empleado
+                        alert(
+                            '⚠️ ATENCIÓN - ÚLTIMO EMPLEADO ELIMINADO\n\n' +
+                            data.warning + '\n\n' +
+                            '🔴 ACCIONES NECESARIAS:\n' +
+                            '1. Registra al menos un empleado nuevo\n' +
+                            '2. Entrena el modelo con el botón 🤖\n' +
+                            '3. El reconocimiento NO funcionará hasta que entrenes el modelo'
+                        );
+                    } else {
+                        alert('✅ Empleado eliminado correctamente');
+                    }
                     location.reload();
                 } else {
-                    alert('Error al eliminar: ' + data.message);
+                    alert('❌ Error al eliminar: ' + data.message);
                 }
             })
-            .catch(err => alert('Error al eliminar: ' + err));
+            .catch(err => alert('❌ Error al eliminar: ' + err));
         }
         </script>
         </div>

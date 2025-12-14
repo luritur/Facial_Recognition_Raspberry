@@ -224,12 +224,13 @@ def ejecutar_run():
     hilos_activos.append(timer)
     
     print("\n=== RUN INICIADO (se liberará automáticamente en 12 segundos) ===\n")
+    return True #para ver si se ha iniciado correctamente ---> para el error en el reconocimiento si no hay nadie registrado
 
 def detener_run():
     global hilos_activos, en_ejecucion
     stop_event.set() #activamos el flag para parar los hilos (camara, deteccion y reconocimiento)
     for t in hilos_activos: 
-        t.join()       # Espera a que cada hilo termine correctamente
+        t.join()       # Espera a que cada hilo termine correctamente  
         hilos_activos.remove(t)
     en_ejecucion = False
     #borramos contenido de las colas

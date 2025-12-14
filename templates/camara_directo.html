@@ -514,15 +514,24 @@ function addRecognitionMessage(nombre, confidence) {
 // Iniciar reconocimiento
 function startRecognition() {
     fetch('/api/api/initrecognition', { method: 'POST' })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw data; });
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('Reconocimiento iniciado:', data);
+            alert('✅ Reconocimiento iniciado correctamente');
             // Iniciar polling si no está activo
             if (!isPolling) {
                 pollRecognitions();
             }
         })
-        .catch(err => console.error('Error al iniciar reconocimiento:', err));
+        .catch(err => {
+            console.error('Error al iniciar reconocimiento:', err);
+            alert('❌ ERROR: ' + (err.message || 'No se pudo iniciar el reconocimiento.\n\nVerifica que:\n1. Hay empleados registrados\n2. El modelo está entrenado (botón 🤖)'));
+        });
 }
 
 // Detener reconocimiento
