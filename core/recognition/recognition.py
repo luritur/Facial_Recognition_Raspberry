@@ -9,6 +9,7 @@ from core.control import stop_event
 from core.gestion.gestion_empleados import registrar_reconocimiento
 import time
 from core.gestion.gestion_empleados import notificar_empleado_actualizado
+from core.bd.bd_functions import actualizar_estado_empleado
 frames = queue.detected
 THRESHOLD = 85  # Ajusta segun los resultados que veas
 
@@ -48,19 +49,32 @@ def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el 
         print(f"Label: {label_name[label]}, Confidence: {confidence:.2f}")   #(para ver los thresholds y poder cambiar luego el if)
         #print(confidence)
         if confidence < THRESHOLD:  
-            estado_actual = estado_empleados.get(label_name[label], "out")
+            dni = label_name[label]
+            estado_actual = estado_empleados.get(dni, "out")
 
             if estado_actual == "out":
-                # Cambia OUT → WORKING
-                estado_empleados[label_name[label]] = "working"
-                
+                nuevo_estado = "working"
             elif estado_actual == "working":
-                # Cambia WORKING → OUT
-                estado_empleados[label_name[label]] = "out"
-            registrar_reconocimiento(label_name[label], confidence)
-            notificar_empleado_actualizado(label_name[label],estado_empleados[label_name[label]])
-            print(f"✅Se ha reconocido al usuario: {label_name[label]}")
-        else:
+                nuevo_estado = "out"
+            else:
+                nuevo_estado = "working"  # Por si acaso
+            estado_empleados[dni] = nuevo_estado
+            
+            print(f"✅ Se ha reconocido al usuario: {dni}")
+            print(f"🔄 Cambiando estado: {estado_actual} → {nuevo_estado}")
+            
+            # ⭐ CRÍTICO: Actualizar en la base de datos
+            resultado = actualizar_estado_empleado(dni, nuevo_estado)
+            if resultado:
+                print(f"✅ Estado guardado en BD correctamente")
+            else:
+                print(f"❌ ERROR: No se pudo guardar el estado en BD")
+            
+            # Registrar el reconocimiento
+            registrar_reconocimiento(dni, confidence)
+            
+            # Notificar cambio
+            notificar_empleado_actualizado(dni, nuevo_estado)
             print('❌No se ha reconocido al usuario')
 
 
