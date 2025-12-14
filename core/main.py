@@ -152,16 +152,16 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
         return
     
     en_ejecucion = True
-    if stop_event.is_set():
-        print("🛑 Cámara detenido por señal")
-        return 
-        
+    stop_event.clear()  # Limpiar stop_event al inicio
+    
     rc = run_camera_thread(frames, 8, PATH_REGISTER, dni)
     rc.join() 
     
     if stop_event.is_set():
-        print("🛑 Cámara detenido por señal")
+        print("🛑 Registro cancelado por señal")
+        en_ejecucion = False
         return 
+        
     persona_path = os.path.join(PATH_REGISTER, dni) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
@@ -211,8 +211,19 @@ def ejecutar_run():
     run_detect_thread()
     run_recognition_thread(config.recognizer, config.names_labels)
     
-    en_ejecucion = False
-    print("\n=== RUN COMPLETADO ===\n")
+    # Programar liberación automática después de 12 segundos (10 seg + margen)
+    def liberar_en_ejecucion():
+        global en_ejecucion
+        if not stop_event.is_set():  # Solo si no se detuvo manualmente
+            en_ejecucion = False
+            print("\n=== RUN COMPLETADO AUTOMÁTICAMENTE ===\n")
+    
+    timer = threading.Timer(12.0, liberar_en_ejecucion)
+    timer.daemon = True
+    timer.start()
+    hilos_activos.append(timer)
+    
+    print("\n=== RUN INICIADO (se liberará automáticamente en 12 segundos) ===\n")
 
 def detener_run():
     global hilos_activos, en_ejecucion
