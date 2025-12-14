@@ -2,6 +2,7 @@ import os
 from web import create_app
 from config import Config
 from core.bd.bd_functions import crear_base_datos
+import core.main as main
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
@@ -12,7 +13,11 @@ PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 # ============================================================
 
 app = create_app()
-
+try:
+    import core.main as main
+    main.set_flask_app(app)
+except Exception as e:
+    print(f"Advertencia: No se pudo configurar main.set_flask_app(): {e}")
 
 if __name__ == '__main__':
     print("=" * 60)

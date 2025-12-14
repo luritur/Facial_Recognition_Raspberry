@@ -93,33 +93,6 @@
         background-color: #28a745;
         border-radius: 50%;
     }
-    .progress-bar-custom {
-        height: 8px;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        position: relative;
-        overflow: hidden;
-    }
-    .progress-fill {
-        height: 100%;
-        border-radius: 4px;
-        transition: width 0.3s;
-    }
-    .time-display {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-    .task-badge {
-        background-color: #e9ecef;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        color: #495057;
-    }
-    .completion-text {
-        font-weight: 600;
-        color: #2c3e50;
-    }
     
     /* Animación para cambios de estado */
     .estado-indicator {
@@ -147,20 +120,6 @@
     <h2>Empleados</h2>
 </div>
 
-<div class="filters-bar">
-    <select class="form-select" style="width: auto;">
-        <option>Centro</option>
-    </select>
-    <select class="form-select" style="width: auto;">
-        <option>Departamento</option>
-    </select>
-    <button class="btn btn-light">
-        <i class="bi bi-three-dots-vertical"></i>
-    </button>
-    <input type="search" class="form-control" placeholder="Buscar" style="max-width: 300px; margin-left: auto;">
-    <button class="btn btn-outline-secondary">Configuración gráf.</button>
-</div>
-
 <div class="employee-table">
     <table id="tablaEmpleados" class="table table-bordered table-striped">
         <thead class="table-dark">
@@ -169,13 +128,12 @@
                 <th>DNI</th>
                 <th>Email</th>
                 <th>Jornada</th>
-                <th>Progreso</th>
                 <th>Estado</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td colspan="6" class="text-center text-muted">Cargando empleados...</td>
+                <td colspan="5" class="text-center text-muted">Cargando empleados...</td>
             </tr>
         </tbody>
     </table>
@@ -184,7 +142,7 @@
 <script>
 let versionActual = 0;
 let esperandoCambios = false;
-let lastEmpleadosVersion = null;  // Variable para polling de estados
+//let lastEmpleadosVersion = null;  // Variable para polling de estados
 
 // Función para limpiar la fila vacía
 function limpiarFilaVacia() {
@@ -221,8 +179,6 @@ function agregarEmpleado(nombre, dni, email, jornada, horas, estado) {
     const fila = document.createElement("tr");
     fila.setAttribute('data-dni', dni);
     fila.setAttribute('data-email', email);
-    
-    const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
     const color = obtenerColorEstado(estado);
 
     fila.innerHTML = `
@@ -230,12 +186,6 @@ function agregarEmpleado(nombre, dni, email, jornada, horas, estado) {
         <td>${dni}</td>
         <td>${email}</td>
         <td>${jornada}h</td>
-        <td>
-            <div style="width:100%; background:#e5e5e5; border-radius:6px;">
-                <div class="progress-fill-bar" style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px; transition: width 0.5s ease;"></div>
-            </div>
-            <small class="horas-texto">${horas}/${jornada} h</small>
-        </td>
         <td>
             <span class="estado-indicator" data-estado="${estado}" style="background:${color};"></span>
         </td>
@@ -252,41 +202,23 @@ function actualizarEmpleado(dni, horas, estado) {
         console.warn(`[UI] ⚠️ Empleado con DNI ${dni} no encontrado en tabla`);
         return;
     }
-
-    // Actualizar horas y progreso
-    if (horas !== undefined) {
-        const jornadaText = fila.cells[3].textContent;
-        const jornada = parseFloat(jornadaText);
-        const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
-        
-        const progressBar = fila.querySelector('.progress-fill-bar');
-        const horasTexto = fila.querySelector('.horas-texto');
-        
-        if (progressBar) {
-            progressBar.style.width = `${progreso}%`;
-        }
-        if (horasTexto) {
-            horasTexto.textContent = `${horas}/${jornada} h`;
-        }
-    }
     
     // Actualizar estado
-    if (estado !== undefined) {
-        const estadoIndicator = fila.querySelector('.estado-indicator');
-        if (estadoIndicator) {
-            const color = obtenerColorEstado(estado);
-            estadoIndicator.style.background = color;
-            estadoIndicator.setAttribute('data-estado', estado);
-            
-            // Añadir animación de pulso
-            estadoIndicator.classList.add('changed');
-            setTimeout(() => {
-                estadoIndicator.classList.remove('changed');
-            }, 600);
-            
-            console.log(`[UI] ✅ Estado actualizado para ${dni}: ${estado} (color: ${color})`);
-        }
+    const estadoIndicator = fila.querySelector('.estado-indicator');
+    if (estadoIndicator) {
+        const color = obtenerColorEstado(estado);
+        estadoIndicator.style.background = color;
+        estadoIndicator.setAttribute('data-estado', estado);
+        
+        // Añadir animación de pulso
+        estadoIndicator.classList.add('changed');
+        setTimeout(() => {
+            estadoIndicator.classList.remove('changed');
+        }, 600);
+        
+        console.log(`[UI] ✅ Estado actualizado para ${dni}: ${estado} (color: ${color})`);
     }
+
 }
 
 // Polling para detectar cambios de estado
@@ -337,44 +269,28 @@ async function cargarEmpleadosInicial() {
     console.log('[CLIENTE] 🚀 Cargando empleados iniciales...');
     try {
         const response = await fetch('/api/empleados');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        
-        console.log('[CLIENTE] 📦 Datos recibidos:', data);
         
         if (data.success) {
             const tbody = document.querySelector("#tablaEmpleados tbody");
             tbody.innerHTML = '';
             
             if (data.empleados.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center text-muted">No hay empleados registrados aún...</td>
-                    </tr>
-                `;
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay empleados...</td></tr>';
             } else {
-                data.empleados.forEach(emp => {
-                    agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
+                data.empleados.forEach(e => {
+                    agregarEmpleado(e.nombre, e.dni, e.email, e.jornada, e.horas, e.estado);
                 });
             }
             
             versionActual = data.version;
-            lastEmpleadosVersion = data.version;
-            console.log(`[CLIENTE] ✅ Empleados iniciales cargados. Versión: ${versionActual}`);
-            
-            // Iniciar polling para cambios de estado
-            iniciarPollingEstados();
-            
-            // Iniciar long polling para nuevos empleados
-            console.log('[CLIENTE] 🔄 Iniciando long polling...');
+            console.log(`[CLIENTE] ✅ Cargados (v${versionActual})`);
             esperarCambios();
         }
     } catch (error) {
-        console.error('[CLIENTE] ❌ Error al cargar empleados:', error);
+        console.error('[CLIENTE] ❌', error);
         setTimeout(cargarEmpleadosInicial, 3000);
     }
 }
@@ -392,45 +308,27 @@ async function esperarCambios() {
     console.log(`[CLIENTE] 📡 Esperando cambios... (versión: ${versionActual})`);
     
     try {
-        const response = await fetch(`/api/empleados/esperar-cambios?version=${versionActual}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch(`/api/empleados/esperar-cambios?version=${versionActual}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
         
-        console.log('[CLIENTE] 📦 Respuesta recibida:', data);
-        
         if (data.success && data.cambio) {
-            console.log(`[CLIENTE] 🔔 ¡Cambio detectado! Tipo: ${data.tipo}`, data.empleado);
-            
+            console.log(`[POLLING] 🔔 Cambio: ${data.tipo}`);
             versionActual = data.version;
             
-            // Procesar según el tipo de cambio
             if (data.tipo === 'nuevo') {
-                const emp = data.empleado;
-                console.log('[CLIENTE] ➕ Procesando empleado nuevo:', emp);
-                agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
+                const e = data.empleado;
+                agregarEmpleado(e.nombre, e.dni, e.email, e.jornada, e.horas, e.estado);
             } else if (data.tipo === 'actualizado') {
-                const emp = data.empleado;
-                console.log('[CLIENTE] 🔄 Procesando actualización:', emp);
-                actualizarEmpleado(emp.dni, emp.horas, emp.estado);
+                actualizarEmpleado(data.empleado.dni, data.empleado.estado);
             }
-        } else {
-            console.log('[CLIENTE] ⏰ Sin cambios (timeout)');
         }
     } catch (error) {
-        console.error('[CLIENTE] ❌ Error en long polling:', error);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.error('[POLLING] ❌', error);
+        await new Promise(r => setTimeout(r, 3000));
     } finally {
         esperandoCambios = false;
-        // Volver a esperar cambios
         setTimeout(() => esperarCambios(), 100);
     }
 }

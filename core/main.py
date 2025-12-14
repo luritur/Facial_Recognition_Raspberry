@@ -16,11 +16,31 @@ import core.recognition.train_LBPH as train
 from core.control import hilos_activos
 from core.control import stop_event
 import core.control as control
+from flask import current_app
 
 import config
 from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
 
 from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados_lista, empleado_exist
+
+flask_app = None
+
+def set_flask_app(app):
+    """Debe ser llamada desde app.py para pasar la instancia de Flask"""
+    global flask_app
+    flask_app = app
+    print("[MAIN] Flask app configurada")  
+
+def get_flask_app():
+    """Obtiene la app Flask, ya sea de la variable global o de current_app"""
+    global flask_app
+    if flask_app is not None:
+        return flask_app
+    try:
+        return current_app._get_current_object()
+    except RuntimeError:
+        print("ERROR: No se puede obtener la app Flask")
+        return None
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -104,9 +124,15 @@ def run_detect_thread():
     
 
 def run_recognition_thread(recognizer, names_labels):
+    app = get_flask_app()
+    
+    if app is None:
+        print("ERROR: flask_app no está configurada. Llama a set_flask_app() primero.")
+        return
+    
     if not getattr(run_recognition_thread, "started", False):
         t_recognition = threading.Thread(target=recognition.recognition_run,
-                                         args=(recognizer, names_labels),
+                                         args=(recognizer, names_labels, app),
                                          daemon=True)
         t_recognition.start()
         run_recognition_thread.started = True
@@ -116,7 +142,6 @@ def run_recognition_thread(recognizer, names_labels):
 
 
 def run_entrenar_modelo_thread():
-
     if control.entrenando_modelo: 
         print("Entrenamiento ya en curso, no inicie otro")
         return 
@@ -151,17 +176,18 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
         print("⚠️ Ya hay una acción en ejecución.")
         return
     
+
     en_ejecucion = True
-    if stop_event.is_set():
-        print("🛑 Cámara detenido por señal")
-        return 
+    stop_event.clear()
         
     rc = run_camera_thread(frames, 8, PATH_REGISTER, dni)
     rc.join() 
     
     if stop_event.is_set():
         print("🛑 Cámara detenido por señal")
+        en_ejecucion = False
         return 
+    
     persona_path = os.path.join(PATH_REGISTER, dni) 
     if not os.path.exists(persona_path) or len(os.listdir(persona_path)) == 0: 
         print("❌ ERROR: No se capturaron imágenes. Verifica la cámara.")
@@ -211,7 +237,7 @@ def ejecutar_run():
     run_detect_thread()
     run_recognition_thread(config.recognizer, config.names_labels)
     
-    en_ejecucion = False
+    en_ejecucion=False
     print("\n=== RUN COMPLETADO ===\n")
 
 def detener_run():
