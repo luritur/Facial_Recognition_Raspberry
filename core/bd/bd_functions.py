@@ -100,6 +100,29 @@ def actualizar_empleado(email, horas=None, estado=None):
         db.session.commit()
         print(f"[DB] 🔄 Empleado {email} actualizado")
 
+def actualizar_estado_empleado(dni, estado):
+    """Actualiza el estado de un empleado por DNI - usado en reconocimiento"""
+    engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    try:
+        empleado = session.query(Empleado).filter_by(dni=dni).first()
+        if not empleado:
+            print(f"[DB] ⚠️ Empleado con DNI {dni} no encontrado")
+            return False
+        
+        empleado.estado = estado
+        session.commit()
+        print(f"[DB] ✅ Estado de {empleado.nombre} ({dni}) actualizado a: {estado}")
+        return True
+    except Exception as e:
+        print(f"[DB] ❌ Error actualizando estado: {e}")
+        session.rollback()
+        return False
+    finally:
+        session.close()
+
 def borrar_empleado(dni):
 
     #borramos xml si era el ultimo empleado

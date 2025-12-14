@@ -147,20 +147,6 @@
     <h2>Empleados</h2>
 </div>
 
-<div class="filters-bar">
-    <select class="form-select" style="width: auto;">
-        <option>Centro</option>
-    </select>
-    <select class="form-select" style="width: auto;">
-        <option>Departamento</option>
-    </select>
-    <button class="btn btn-light">
-        <i class="bi bi-three-dots-vertical"></i>
-    </button>
-    <input type="search" class="form-control" placeholder="Buscar" style="max-width: 300px; margin-left: auto;">
-    <button class="btn btn-outline-secondary">Configuración gráf.</button>
-</div>
-
 <div class="employee-table">
     <table id="tablaEmpleados" class="table table-bordered table-striped">
         <thead class="table-dark">
@@ -199,7 +185,7 @@ function limpiarFilaVacia() {
 // Función para obtener el color según el estado
 function obtenerColorEstado(estado) {
     const colores = {
-        "trabajando": "#ffc107",  // Amarillo
+        "working": "#ffc107",  // Amarillo
         "in": "#ffc107",          // Amarillo (alias)
         "out": "#dc3545",         // Rojo
         "completado": "#28a745",  // Verde
@@ -289,49 +275,6 @@ function actualizarEmpleado(dni, horas, estado) {
     }
 }
 
-// Polling para detectar cambios de estado
-function iniciarPollingEstados() {
-    setInterval(() => {
-        fetch('/api/api/empleados_estado_actualizar')
-            .then(response => response.json())
-            .then(data => {
-                console.log('[POLLING] 📊 Respuesta recibida:', data);
-                
-                if (lastEmpleadosVersion === null) {
-                    lastEmpleadosVersion = data.version;
-                    console.log('[POLLING] 🆕 Primera versión establecida:', lastEmpleadosVersion);
-                    return;
-                }
-                
-                if (data.version !== lastEmpleadosVersion) {
-                    console.log(`[POLLING] 🔔 Nueva versión detectada: ${data.version} (anterior: ${lastEmpleadosVersion})`);
-                    lastEmpleadosVersion = data.version;
-                    
-                    if (data.ultimo_cambio) {
-                        console.log('[POLLING] 📦 Último cambio:', data.ultimo_cambio);
-                        
-                        if (data.ultimo_cambio.tipo === 'actualizado') {
-                            const emp = data.ultimo_cambio.empleado;
-                            console.log(`[POLLING] 🔄 Actualizando estado de ${emp.dni} a ${emp.estado}`);
-                            actualizarEstadoEmpleado(emp.dni, emp.estado);
-                        }
-                    }
-                } else {
-                    console.log('[POLLING] ⏸️ Sin cambios (misma versión)');
-                }
-            })
-            .catch(error => {
-                console.error('[POLLING] ❌ Error:', error);
-            });
-    }, 2000); // Poll cada 2 segundos
-}
-
-// Función para actualizar solo el estado de un empleado (para polling)
-function actualizarEstadoEmpleado(dni, nuevoEstado) {
-    console.log(`[UI-POLLING] 🔄 Actualizando estado de DNI: ${dni} a ${nuevoEstado}`);
-    actualizarEmpleado(dni, undefined, nuevoEstado);
-}
-
 // Cargar TODOS los empleados al inicio
 async function cargarEmpleadosInicial() {
     console.log('[CLIENTE] 🚀 Cargando empleados iniciales...');
@@ -363,14 +306,10 @@ async function cargarEmpleadosInicial() {
             }
             
             versionActual = data.version;
-            lastEmpleadosVersion = data.version;
             console.log(`[CLIENTE] ✅ Empleados iniciales cargados. Versión: ${versionActual}`);
             
-            // Iniciar polling para cambios de estado
-            iniciarPollingEstados();
-            
-            // Iniciar long polling para nuevos empleados
-            console.log('[CLIENTE] 🔄 Iniciando long polling...');
+            // SOLO INICIAR UN POLLING - este maneja TODO
+            console.log('[CLIENTE] 🔄 Iniciando long polling unificado...');
             esperarCambios();
         }
     } catch (error) {
@@ -419,7 +358,8 @@ async function esperarCambios() {
                 agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
             } else if (data.tipo === 'actualizado') {
                 const emp = data.empleado;
-                console.log('[CLIENTE] 🔄 Procesando actualización:', emp);
+                console.log('[CLIENTE] 🔄 Procesando actualización de estado:', emp);
+                // Actualizar tanto horas como estado (la función ya existe)
                 actualizarEmpleado(emp.dni, emp.horas, emp.estado);
             }
         } else {

@@ -207,13 +207,33 @@ def esperar_cambios():
             if gestion_empleados.empleados_version > version_actual:
                 print(f"[LONG POLLING] 🎉 ¡Cambio detectado! {gestion_empleados.empleados_version} > {version_actual}")
                 print(f"[LONG POLLING] 📦 Enviando: {gestion_empleados.ultimo_cambio}")
+
+                tipo_cambio = gestion_empleados.ultimo_cambio['tipo']
+                empleado_data = gestion_empleados.ultimo_cambio['empleado']
+                
+                # Si es actualización de estado, obtener datos completos de la BD
+                if tipo_cambio == 'actualizado':
+                    dni = empleado_data['dni']
+                    empleados = obtener_empleados_lista()
+                    
+                    for emp in empleados:
+                        if emp.dni == dni:
+                            empleado_data = {
+                                'dni': emp.dni,
+                                'nombre': emp.nombre,
+                                'email': emp.email,
+                                'jornada': emp.jornada,
+                                'horas': emp.horas,
+                                'estado': emp.estado  # Estado actualizado de la BD
+                            }
+                            break
                 
                 return jsonify({
                     'success': True,
                     'cambio': True,
                     'version': gestion_empleados.empleados_version,
-                    'tipo': gestion_empleados.ultimo_cambio['tipo'],
-                    'empleado': gestion_empleados.ultimo_cambio['empleado']
+                    'tipo': tipo_cambio,
+                    'empleado': empleado_data
                 })
         
         time.sleep(0.5)
@@ -289,16 +309,4 @@ def recognition_event():
         'success': True,
         'nuevo': False,
         'id': last_client_id
-    })
-
-
-@api_bp.route('/api/empleados_estado_actualizar', methods=['GET'])
-def empleados_estado_actualizar():
-    """
-    Endpoint específico para detectar cambios de estado.
-    Devuelve la versión actual y el último cambio de estado.
-    """
-    return jsonify({
-        'version': gestion_empleados.empleados_version,
-        'ultimo_cambio': gestion_empleados.ultimo_cambio
     })
