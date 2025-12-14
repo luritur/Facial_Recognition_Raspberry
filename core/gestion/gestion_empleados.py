@@ -3,7 +3,7 @@ from core.bd.bd_functions import obtener_empleados_lista
 from core.bd.bd_functions import get_empleado_name
 # Variables globales para notificar cambios
 empleados_version = 0
-empleados_lock = threading.Lock()
+empleados_condition = threading.Condition()
 ultimo_cambio = None
 
 #para reconcimiento:
@@ -22,7 +22,7 @@ def notificar_nuevo_empleado(dni, nombre, email, jornada, horas=0, estado='out')
     # agregar_empleado_a_lista(nombre, email, jornada, horas, estado)
     
     # SEGUNDO: Notificar el cambio
-    with empleados_lock:
+    with empleados_condition:
         version_anterior = empleados_version
         empleados_version += 1
         ultimo_cambio = {
@@ -38,13 +38,15 @@ def notificar_nuevo_empleado(dni, nombre, email, jornada, horas=0, estado='out')
         }
         print(f"[NOTIFICACION] 📊 Versión: {version_anterior} → {empleados_version}")
         print(f"[NOTIFICACION] 📦 Ultimo cambio: {ultimo_cambio}")
-    
+        empleados_condition.notify_all()
     print(f"[NOTIFICACION] ✅ Notificación completada para: {nombre}")
 
 def notificar_empleado_actualizado(dni, estado):
     global empleados_version, ultimo_cambio
     
-    with empleados_lock:
+    print(f"[NOTIFICACION] 🔄 Actualizando estado de DNI: {dni} → {estado}")
+
+    with empleados_condition:
         # Actualizar en la lista
         empleados = obtener_empleados_lista()
         for emp in empleados:
@@ -63,7 +65,7 @@ def notificar_empleado_actualizado(dni, estado):
             }
         }
         print(f"[NOTIFICACION] 🔔 Notificado actualización: {dni} - estado cambiado a {estado}")
-
+        empleados_condition.notify_all()
     
 
 
