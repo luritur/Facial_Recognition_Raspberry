@@ -522,7 +522,6 @@ function startRecognition() {
         })
         .then(data => {
             console.log('Reconocimiento iniciado:', data);
-            alert('✅ Reconocimiento iniciado correctamente');
             // Iniciar polling si no está activo
             if (!isPolling) {
                 pollRecognitions();

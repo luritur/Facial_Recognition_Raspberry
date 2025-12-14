@@ -185,6 +185,16 @@ def api_entrenarModelo():
         'message': 'Modelo entrenado'
     })
 
+@api_bp.route('/api/entrenamiento/progreso', methods=['GET'])
+def obtener_progreso_entrenamiento():
+    """Devuelve el progreso actual del entrenamiento"""
+    import core.control as control
+    return jsonify({
+        'entrenando': control.entrenando_modelo,
+        'progreso': control.entrenamiento_progreso,
+        'mensaje': control.entrenamiento_mensaje
+    })
+
 
 ############################################################
 
