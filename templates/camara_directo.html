@@ -429,7 +429,7 @@
 </div>
 
 <script>
-let lastRecognitionId = parseInt(localStorage.getItem('lastRecognitionId') || '0');
+let lastRecognitionId = 0;
 let isPolling = false;
 let totalRecognitions = 0;
 
@@ -454,7 +454,6 @@ async function pollRecognitions() {
 
             if (data.success && data.nuevo) {
                 lastRecognitionId = data.id;
-                localStorage.setItem('lastRecognitionId', lastRecognitionId);  // ← NUEVA LÍNEA
                 addRecognitionMessage(data.mensaje, data.confidence);
                 totalRecognitions++;
                 document.getElementById('totalRecognitions').textContent = totalRecognitions;
