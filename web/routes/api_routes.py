@@ -37,13 +37,15 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
     global reconocimiento_activo
+    id_actual = gestion_empleados.ultimo_id_reconocimiento
     iniciado = ejecutar_run()
     
     if iniciado:
         reconocimiento_activo = True
         return jsonify({
             "status": "ok",
-            "message": "Reconocimiento iniciado"
+            "message": "Reconocimiento iniciado",
+            "current_id": id_actual
         })
     else:
         # No se pudo iniciar (no hay modelo, etc.)
