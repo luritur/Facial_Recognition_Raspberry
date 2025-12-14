@@ -19,6 +19,7 @@ from core.bd.bd_functions import obtener_empleados_lista
 registro_activo = False
 registro_thread = None
 employees_data = []  # Lista temporal de empleados (luego la sacarías de una BD o archivo)
+reconocimiento_activo=False
 
 
 
@@ -35,7 +36,9 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
+    global reconocimiento_activo
     ejecutar_run()
+    reconocimiento_activo=True
     return jsonify({
         "status": "ok",
         "message": "Reconocimiento iniciado"
@@ -43,12 +46,21 @@ def detectar_start():
 
 @api_bp.route('/api/stoprecognition', methods=['POST'])
 def detectar_stop():
+    global reconocimiento_activo
     detener_run()
+    reconocimiento_activo=False
     return jsonify({
         "status": "ok",
         "message": "Reconocimiento detenido"
     })
 
+@api_bp.route('/api/reconocimiento/estado', methods=['GET'])
+def obtener_estado_reconocimiento():
+    """Devuelve si el reconocimiento está activo"""
+    global reconocimiento_activo
+    return jsonify({
+        "activo": reconocimiento_activo
+    })
 
 @api_bp.route('/api/check_user_exists', methods=['POST'])
 def api_check_user_exists():
