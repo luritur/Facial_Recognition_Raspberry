@@ -697,9 +697,6 @@ function entrenarModelo() {
         return;
     }
     
-    // Mostrar modal de progreso
-    mostrarModalProgreso();
-    
     fetch('api/api/entrenarModelo', { method: 'POST' })
         .then(response => {
             if (!response.ok) {
@@ -710,6 +707,7 @@ function entrenarModelo() {
         .then(data => {
             console.log('OK:', data);
             // Iniciar polling de progreso
+            mostrarModalProgreso();
             iniciarPollingProgreso();
         })
         .catch(err => {
@@ -806,7 +804,6 @@ function iniciarPollingProgreso() {
                         // Éxito
                         setTimeout(() => {
                             cerrarModalProgreso();
-                            alert('✅ Modelo entrenado correctamente\n\nYa puedes usar el reconocimiento facial.');
                             location.reload();
                         }, 1500);
                     } else if (data.progreso === -1) {
