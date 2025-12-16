@@ -87,8 +87,12 @@ if camIndex is None:
     camIndex = 0
 
 
-def run_camera_thread(frames, duracion, path, dni=None):
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, 0, dni))
+def run_camera_thread(frames, duracion, path, camera_index=None, dni=None):
+    """
+    Lanza el hilo de la cámara. Si no se pasa `camera_index`, usa el `camIndex` detectado.
+    """
+    idx = camera_index if camera_index is not None else camIndex
+    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, idx, dni))
     t_camera.start()
     hilos_activos.append(t_camera)
     return t_camera
@@ -171,16 +175,28 @@ en_ejecucion = False
 
 def ejecutar_registro(nombre_empleado, dni, email, jornada):
     global en_ejecucion
+    # Detectar si había reconocimiento / detección en marcha
+    reconocimiento_ejecutandose = bool(getattr(run_recognition_thread, "started", False) or getattr(run_detect_thread, "started", False) or en_ejecucion)
 
-    if en_ejecucion:
-        print("⚠️ Ya hay una acción en ejecución.")
-        return
-    
+    if reconocimiento_ejecutandose:
+        print("⏸️ Pausando reconocimiento/acción en curso para realizar registro...")
+        detener_run()
+        # Esperar un poco a que los hilos terminen y la cámara quede libre
+        wait_start = time.time()
+        while hilos_activos:
+            if time.time() - wait_start > 6:
+                print("⚠️ Tiempo de espera por liberación de hilos excedido, continuando de todas formas")
+                break
+            time.sleep(0.1)
+        time.sleep(0.2)
+        en_ejecucion = False
+
     en_ejecucion = True
     stop_event.clear()  # Limpiar stop_event al inicio
-    
-    rc = run_camera_thread(frames, 8, PATH_REGISTER, dni)
-    rc.join() 
+
+    # usar camIndex detectado por defecto
+    rc = run_camera_thread(frames, 8, PATH_REGISTER, camera_index=camIndex, dni=dni)
+    rc.join()
     
     if stop_event.is_set():
         print("🛑 Registro cancelado por señal")
@@ -207,6 +223,10 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
     print(f"Se capturaron {num_fotos} imágenes de {nombre_empleado} DNI:{dni}")
     print(f"✅ Registro completado para:{nombre_empleado} DNI:{dni} ")
     en_ejecucion = False
+    if reconocimiento_ejecutandose:
+        time.sleep(0.2)
+        print("▶️ Reanudando reconocimiento después del registro...")
+        ejecutar_run()
 
 def ejecutar_run():
 
@@ -237,16 +257,26 @@ def ejecutar_run():
     run_recognition_thread(config.recognizer, config.names_labels)
     
     print("\n=== RUN INICIADO (se liberará automáticamente en 12 segundos) ===\n")
+    en_ejecucion = False
     return True #para ver si se ha iniciado correctamente ---> para el error en el reconocimiento si no hay nadie registrado
 
 def detener_run():
     global hilos_activos, en_ejecucion
-    stop_event.set() #activamos el flag para parar los hilos (camara, deteccion y reconocimiento)
-    for t in hilos_activos: 
-        t.join()       # Espera a que cada hilo termine correctamente  
-        hilos_activos.remove(t)
+    stop_event.set()  # activamos el flag para parar los hilos (camara, deteccion y reconocimiento)
+
+    # Iterar sobre una copia para poder hacer join y eliminar de la lista sin modificar
+    for t in hilos_activos[:]:
+        try:
+            t.join(timeout=5)  # timeout para no bloquear indefinidamente
+        except Exception as e:
+            print(f"[detener_run] Error al hacer join(): {e}")
+        try:
+            hilos_activos.remove(t)
+        except ValueError:
+            pass
+
     en_ejecucion = False
-    #borramos contenido de las colas
+    # borramos contenido de las colas
     queue.clear_queues()
     run_detect_thread.started = False
     run_recognition_thread.started = False
