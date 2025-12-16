@@ -16,22 +16,6 @@
         color: #2c3e50;
         font-weight: 600;
     }
-    .filters-bar {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .filters-bar select, .filters-bar input {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 8px 15px;
-    }
     .employee-table {
         background: white;
         border-radius: 12px;
@@ -57,77 +41,32 @@
         padding: 15px;
         vertical-align: middle;
     }
-    .employee-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .employee-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-    .employee-name {
-        font-weight: 600;
-        color: #2c3e50;
-        margin: 0;
-    }
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-    }
-    .status-online {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    .status-online::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background-color: #28a745;
-        border-radius: 50%;
-    }
     .progress-bar-custom {
-        height: 8px;
-        border-radius: 4px;
+        height: 12px;
+        border-radius: 6px;
         background-color: #e9ecef;
         position: relative;
         overflow: hidden;
+        width: 100%;
     }
     .progress-fill {
         height: 100%;
-        border-radius: 4px;
-        transition: width 0.3s;
+        border-radius: 6px;
+        transition: width 0.5s ease, background-color 0.5s ease;
     }
     .time-display {
         font-size: 0.9rem;
         color: #6c757d;
-    }
-    .task-badge {
-        background-color: #e9ecef;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        color: #495057;
-    }
-    .completion-text {
-        font-weight: 600;
-        color: #2c3e50;
+        margin-top: 5px;
     }
     
-    /* Animación para cambios de estado */
+    /* Estados con colores */
     .estado-indicator {
         display: inline-block;
-        width: 16px;
-        height: 16px;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
-        border: 1px solid #555;
+        border: 2px solid #555;
         transition: background-color 0.5s ease, transform 0.3s ease;
     }
     
@@ -135,16 +74,81 @@
         animation: pulse 0.6s ease-in-out;
     }
     
+    /* Colores según estado */
+    .estado-out {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .estado-working {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        animation: pulse-working 2s infinite;
+    }
+    
+    .estado-completado {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    /* Colores de progreso */
+    .progress-bajo {
+        background: linear-gradient(90deg, #dc3545, #e74c3c);
+    }
+    
+    .progress-medio {
+        background: linear-gradient(90deg, #ffc107, #ffb300);
+    }
+    
+    .progress-alto {
+        background: linear-gradient(90deg, #17a2b8, #138496);
+    }
+    
+    .progress-completado {
+        background: linear-gradient(90deg, #28a745, #20c997);
+    }
+    
     @keyframes pulse {
         0%, 100% { transform: scale(1); }
         50% { transform: scale(1.3); }
+    }
+    
+    @keyframes pulse-working {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+    }
+    
+    /* Badge de estado */
+    .estado-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .badge-out {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .badge-working {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .badge-completado {
+        background-color: #d4edda;
+        color: #155724;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="header-section">
-    <h2>Empleados</h2>
+    <h2>📊 Panel de Fichaje</h2>
 </div>
 
 <div class="employee-table">
@@ -170,7 +174,7 @@
 <script>
 let versionActual = 0;
 let esperandoCambios = false;
-let lastEmpleadosVersion = null;  // Variable para polling de estados
+let empleadosMap = new Map(); // Para tracking de actualizaciones en tiempo real
 
 // Función para limpiar la fila vacía
 function limpiarFilaVacia() {
@@ -182,21 +186,37 @@ function limpiarFilaVacia() {
     }
 }
 
-// Función para obtener el color según el estado
-function obtenerColorEstado(estado) {
-    const colores = {
-        "working": "#ffc107",  // Amarillo
-        "in": "#ffc107",          // Amarillo (alias)
-        "out": "#dc3545",         // Rojo
-        "completado": "#28a745",  // Verde
-        "completada": "#28a745"   // Verde (alias)
+// Función para obtener color de progreso según porcentaje
+function obtenerColorProgreso(progreso, jornada_completada) {
+    if (jornada_completada) return 'progress-completado';
+    if (progreso >= 75) return 'progress-alto';
+    if (progreso >= 40) return 'progress-medio';
+    return 'progress-bajo';
+}
+
+// Función para obtener clase de estado
+function obtenerClaseEstado(estado) {
+    const clases = {
+        "working": "estado-working",
+        "out": "estado-out",
+        "completado": "estado-completado"
     };
-    return colores[estado] || "#6c757d"; // Gris por defecto
+    return clases[estado] || "estado-out";
+}
+
+// Función para obtener texto de estado
+function obtenerTextoEstado(estado) {
+    const textos = {
+        "working": "Trabajando",
+        "out": "Fuera",
+        "completado": "Completado"
+    };
+    return textos[estado] || "Desconocido";
 }
 
 // Función para agregar un empleado NUEVO
-function agregarEmpleado(nombre, dni, email, jornada, horas, estado) {
-    console.log(`[UI] ➕ Agregando empleado: ${nombre}`);
+function agregarEmpleado(emp) {
+    console.log(`[UI] ➕ Agregando empleado: ${emp.nombre}`);
     limpiarFilaVacia();
     const tbody = document.querySelector("#tablaEmpleados tbody");
     if (!tbody) {
@@ -205,75 +225,153 @@ function agregarEmpleado(nombre, dni, email, jornada, horas, estado) {
     }
 
     const fila = document.createElement("tr");
-    fila.setAttribute('data-dni', dni);
-    fila.setAttribute('data-email', email);
+    fila.setAttribute('data-dni', emp.dni);
     
-    const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
-    const color = obtenerColorEstado(estado);
+    const claseEstado = obtenerClaseEstado(emp.estado);
+    const colorProgreso = obtenerColorProgreso(emp.progreso, emp.jornada_completada);
 
     fila.innerHTML = `
-        <td>${nombre}</td>
-        <td>${dni}</td>
-        <td>${email}</td>
-        <td>${jornada}h</td>
+        <td>${emp.nombre}</td>
+        <td>${emp.dni}</td>
+        <td>${emp.email}</td>
+        <td>${emp.jornada}h</td>
         <td>
-            <div style="width:100%; background:#e5e5e5; border-radius:6px;">
-                <div class="progress-fill-bar" style="width:${progreso}%; height:12px; background:#007bff; border-radius:6px; transition: width 0.5s ease;"></div>
+            <div class="progress-bar-custom">
+                <div class="progress-fill ${colorProgreso}" data-progreso="${emp.progreso}" style="width:${emp.progreso}%;"></div>
             </div>
-            <small class="horas-texto">${horas}/${jornada} h</small>
+            <small class="time-display">${emp.horas_formateadas} / ${emp.jornada}h</small>
         </td>
         <td>
-            <span class="estado-indicator" data-estado="${estado}" style="background:${color};"></span>
+            <div class="estado-badge badge-${emp.estado}">
+                <span class="estado-indicator ${claseEstado}" data-estado="${emp.estado}"></span>
+                <span>${obtenerTextoEstado(emp.estado)}</span>
+            </div>
         </td>
     `;
+    
     tbody.appendChild(fila);
-    console.log(`[UI] ✅ Empleado agregado a la tabla: ${nombre}`);
+    
+    // Guardar en map para updates
+    empleadosMap.set(emp.dni, emp);
+    
+    console.log(`[UI] ✅ Empleado agregado: ${emp.nombre}`);
 }
 
-// Función para actualizar un empleado EXISTENTE (horas y/o estado)
-function actualizarEmpleado(dni, horas, estado) {
-    console.log(`[UI] 🔄 Actualizando empleado DNI: ${dni}, horas: ${horas}, estado: ${estado}`);
-    const fila = document.querySelector(`tr[data-dni="${dni}"]`);
+// Función para actualizar un empleado EXISTENTE
+function actualizarEmpleado(emp) {
+    console.log(`[UI] 🔄 Actualizando empleado: ${emp.dni}`);
+    const fila = document.querySelector(`tr[data-dni="${emp.dni}"]`);
     if (!fila) {
-        console.warn(`[UI] ⚠️ Empleado con DNI ${dni} no encontrado en tabla`);
+        console.warn(`[UI] ⚠️ Empleado ${emp.dni} no encontrado en tabla`);
         return;
     }
 
-    // Actualizar horas y progreso
-    if (horas !== undefined) {
-        const jornadaText = fila.cells[3].textContent;
-        const jornada = parseFloat(jornadaText);
-        const progreso = Math.min((horas / jornada) * 100, 100).toFixed(1);
-        
-        const progressBar = fila.querySelector('.progress-fill-bar');
-        const horasTexto = fila.querySelector('.horas-texto');
-        
-        if (progressBar) {
-            progressBar.style.width = `${progreso}%`;
-        }
-        if (horasTexto) {
-            horasTexto.textContent = `${horas}/${jornada} h`;
-        }
+    const empleadoAnterior = empleadosMap.get(emp.dni);
+    const cambioEstado = empleadoAnterior && empleadoAnterior.estado !== emp.estado;
+    
+    // Actualizar progreso
+    const progressBar = fila.querySelector('.progress-fill');
+    const timeDisplay = fila.querySelector('.time-display');
+    
+    if (progressBar) {
+        const colorProgreso = obtenerColorProgreso(emp.progreso, emp.jornada_completada);
+        progressBar.style.width = `${emp.progreso}%`;
+        progressBar.className = `progress-fill ${colorProgreso}`;
+    }
+    
+    if (timeDisplay) {
+        timeDisplay.textContent = `${emp.horas_formateadas} / ${emp.jornada}h`;
     }
     
     // Actualizar estado
-    if (estado !== undefined) {
-        const estadoIndicator = fila.querySelector('.estado-indicator');
-        if (estadoIndicator) {
-            const color = obtenerColorEstado(estado);
-            estadoIndicator.style.background = color;
-            estadoIndicator.setAttribute('data-estado', estado);
-            
-            // Añadir animación de pulso
+    const estadoBadge = fila.querySelector('.estado-badge');
+    const estadoIndicator = fila.querySelector('.estado-indicator');
+    
+    if (estadoBadge && estadoIndicator) {
+        const claseEstado = obtenerClaseEstado(emp.estado);
+        
+        // Actualizar clases
+        estadoBadge.className = `estado-badge badge-${emp.estado}`;
+        estadoIndicator.className = `estado-indicator ${claseEstado}`;
+        estadoIndicator.setAttribute('data-estado', emp.estado);
+        
+        // Actualizar texto
+        const estadoTexto = estadoBadge.querySelector('span:last-child');
+        if (estadoTexto) {
+            estadoTexto.textContent = obtenerTextoEstado(emp.estado);
+        }
+        
+        // Animación si cambió el estado
+        if (cambioEstado) {
             estadoIndicator.classList.add('changed');
             setTimeout(() => {
                 estadoIndicator.classList.remove('changed');
             }, 600);
-            
-            console.log(`[UI] ✅ Estado actualizado para ${dni}: ${estado} (color: ${color})`);
         }
+        
+        console.log(`[UI] ✅ Estado actualizado: ${emp.estado}`);
     }
+    
+    // Actualizar en map
+    empleadosMap.set(emp.dni, emp);
 }
+
+// Actualización automática: recargar datos del servidor cada 30 segundos
+let actualizacionAutomaticaInterval = null;
+
+function iniciarActualizacionAutomatica() {
+    // Limpiar intervalo anterior si existe
+    if (actualizacionAutomaticaInterval) {
+        clearInterval(actualizacionAutomaticaInterval);
+    }
+    
+    // Actualizar cada 30 segundos
+    actualizacionAutomaticaInterval = setInterval(async () => {
+        console.log('[AUTO-UPDATE] 🔄 Actualizando datos...');
+        try {
+            const response = await fetch('/api/empleados');
+            if (!response.ok) throw new Error('Error al obtener datos');
+            
+            const data = await response.json();
+            
+            if (data.success && data.empleados) {
+                // Actualizar cada empleado existente
+                data.empleados.forEach(emp => {
+                    const fila = document.querySelector(`tr[data-dni="${emp.dni}"]`);
+                    if (fila) {
+                        // Actualizar solo si hay cambios (para evitar parpadeos)
+                        const progressBar = fila.querySelector('.progress-fill');
+                        const timeDisplay = fila.querySelector('.time-display');
+                        
+                        if (progressBar) {
+                            const colorProgreso = obtenerColorProgreso(emp.progreso, emp.jornada_completada);
+                            progressBar.style.width = `${emp.progreso}%`;
+                            progressBar.className = `progress-fill ${colorProgreso}`;
+                        }
+                        
+                        if (timeDisplay) {
+                            timeDisplay.textContent = `${emp.horas_formateadas} / ${emp.jornada}h`;
+                        }
+                        
+                        // Actualizar en map
+                        empleadosMap.set(emp.dni, emp);
+                    }
+                });
+                
+                console.log('[AUTO-UPDATE] ✅ Datos actualizados');
+            }
+        } catch (error) {
+            console.error('[AUTO-UPDATE] ❌ Error:', error);
+        }
+    }, 30000); // 30 segundos
+}
+
+// Detener actualización automática cuando se cierra la página
+window.addEventListener('beforeunload', () => {
+    if (actualizacionAutomaticaInterval) {
+        clearInterval(actualizacionAutomaticaInterval);
+    }
+});
 
 // Cargar TODOS los empleados al inicio
 async function cargarEmpleadosInicial() {
@@ -301,15 +399,15 @@ async function cargarEmpleadosInicial() {
                 `;
             } else {
                 data.empleados.forEach(emp => {
-                    agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
+                    agregarEmpleado(emp);
                 });
             }
             
             versionActual = data.version;
             console.log(`[CLIENTE] ✅ Empleados iniciales cargados. Versión: ${versionActual}`);
             
-            // SOLO INICIAR UN POLLING - este maneja TODO
-            console.log('[CLIENTE] 🔄 Iniciando long polling unificado...');
+            // Iniciar long polling
+            console.log('[CLIENTE] 🔄 Iniciando long polling...');
             esperarCambios();
         }
     } catch (error) {
@@ -318,9 +416,7 @@ async function cargarEmpleadosInicial() {
     }
 }
 
-// Polling para detectar cambios de estado
-
-// Long polling: esperar cambios (para nuevos empleados)
+// Long polling: esperar cambios
 async function esperarCambios() {
     if (esperandoCambios) {
         console.warn('[CLIENTE] ⚠️ Ya hay una petición activa');
@@ -351,16 +447,10 @@ async function esperarCambios() {
             
             versionActual = data.version;
             
-            // Procesar según el tipo de cambio
             if (data.tipo === 'nuevo') {
-                const emp = data.empleado;
-                console.log('[CLIENTE] ➕ Procesando empleado nuevo:', emp);
-                agregarEmpleado(emp.nombre, emp.dni, emp.email, emp.jornada, emp.horas, emp.estado);
+                agregarEmpleado(data.empleado);
             } else if (data.tipo === 'actualizado') {
-                const emp = data.empleado;
-                console.log('[CLIENTE] 🔄 Procesando actualización de estado:', emp);
-                // Actualizar tanto horas como estado (la función ya existe)
-                actualizarEmpleado(emp.dni, emp.horas, emp.estado);
+                actualizarEmpleado(data.empleado);
             }
         } else {
             console.log('[CLIENTE] ⏰ Sin cambios (timeout)');
@@ -370,7 +460,6 @@ async function esperarCambios() {
         await new Promise(resolve => setTimeout(resolve, 3000));
     } finally {
         esperandoCambios = false;
-        // Volver a esperar cambios
         setTimeout(() => esperarCambios(), 100);
     }
 }
@@ -378,6 +467,9 @@ async function esperarCambios() {
 // Iniciar al cargar la página
 console.log('[CLIENTE] 🎬 Iniciando dashboard...');
 cargarEmpleadosInicial();
+
+// Iniciar actualización automática
+iniciarActualizacionAutomatica();
 </script>
 
 {% endblock %}
