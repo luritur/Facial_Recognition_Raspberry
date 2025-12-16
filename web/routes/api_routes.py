@@ -193,24 +193,43 @@ def obtener_progreso_entrenamiento():
 
 ############################################################
 
-
 @api_bp.route('/empleados', methods=['GET'])
 def obtener_empleados():
-    """Devuelve empleados actuales"""
+    """Devuelve empleados actuales con información completa de tiempo calculada en tiempo real"""
+    from core.bd.bd_functions import obtener_minutos_totales_actuales
     empleados = obtener_empleados_lista()
     
     # Convertir objetos Empleado a diccionarios
-    empleados_dict = [
-        {
+    empleados_dict = []
+    for emp in empleados:
+        # Calcular minutos totales en tiempo real (incluye sesión actual si está trabajando)
+        minutos_totales = obtener_minutos_totales_actuales(emp.dni)
+        
+        # Calcular progreso con minutos totales actuales
+        minutos_jornada = emp.jornada * 60
+        progreso = min((minutos_totales / minutos_jornada) * 100, 100)
+        
+        # Formatear tiempo
+        horas = minutos_totales // 60
+        minutos = minutos_totales % 60
+        horas_formateadas = f"{horas}h {minutos}m"
+        
+        # Verificar si completó jornada
+        jornada_completada = minutos_totales >= minutos_jornada
+        
+        empleados_dict.append({
             'nombre': emp.nombre,
             'dni': emp.dni,
             'email': emp.email,
-            'jornada': emp.jornada,
-            'horas': emp.horas_trabajadas if hasattr(emp, 'horas_trabajadas') else 0,
-            'estado': emp.estado if hasattr(emp, 'estado') else 'out'
-        }
-        for emp in empleados
-    ]
+            'jornada': emp.jornada,  # Horas de jornada
+            'minutos_trabajados': emp.minutos_trabajados,  # Acumulado guardado
+            'minutos_totales': minutos_totales,  # Total actual (incluye sesión)
+            'estado': emp.estado,
+            'progreso': round(progreso, 1),
+            'horas_formateadas': horas_formateadas,
+            'jornada_completada': jornada_completada,
+            'trabajando_desde': emp.hora_entrada.isoformat() if emp.hora_entrada else None
+        })
     
     return jsonify({
         'success': True,
