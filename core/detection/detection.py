@@ -3,6 +3,7 @@ import core.queues.colas as queue
 import cv2
 import os
 from core.control import stop_event
+from queue import Full, Empty
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
@@ -17,51 +18,60 @@ def detection_run():
     print("detectando en detection_run....")
     with mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5) as face_detection:
         while not stop_event.is_set():
-            frame = frames.get()
-            if frame is None:
-                continue
+            try:
+                frame = frames.get(timeout=0.1)  # Intenta obtener el frame con un timeout
+                if frame is None:
+                    continue
 
-            # To improve performance, optionally mark the image as not writeable to
-            # pass by reference.
-            frame.flags.writeable = False
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = face_detection.process(frame_rgb)
+                # Procesamiento de la imagen
+                frame.flags.writeable = False
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                results = face_detection.process(frame_rgb)
 
-            frame.flags.writeable = True
-            # keep frame as BGR for display/IO
-            if results.detections:
-                print("CARA DETECTADA !!!!!!!")
-                h_img, w_img = frame.shape[:2]
-                for detection in results.detections:
-                    bbox = detection.location_data.relative_bounding_box
-                    x = int(bbox.xmin * w_img)
-                    y = int(bbox.ymin * h_img)
-                    w = int(bbox.width * w_img)
-                    h = int(bbox.height * h_img)
+                frame.flags.writeable = True
+                if results.detections:
+                    print("CARA DETECTADA !!!!!!!")
+                    h_img, w_img = frame.shape[:2]
+                    for detection in results.detections:
+                        bbox = detection.location_data.relative_bounding_box
+                        x = int(bbox.xmin * w_img)
+                        y = int(bbox.ymin * h_img)
+                        w = int(bbox.width * w_img)
+                        h = int(bbox.height * h_img)
 
-                    # Clamp values to image bounds
-                    x = max(0, x)
-                    y = max(0, y)
-                    w = max(0, min(w, w_img - x))
-                    h = max(0, min(h, h_img - y))
+                        # Clampear valores para que estén dentro de los límites
+                        x = max(0, x)
+                        y = max(0, y)
+                        w = max(0, min(w, w_img - x))
+                        h = max(0, min(h, h_img - y))
 
-                    if w == 0 or h == 0:
-                        print("Bounding box invÃ¡lido, saltando.")
-                        continue
+                        if w == 0 or h == 0:
+                            print("Bounding box inválido, saltando.")
+                            continue
 
-                    face_crop = frame[y:y+h, x:x+w]  # frame is BGR
-                    if face_crop.size == 0:
-                        print("face_crop vacÃ­o, saltando.")
-                        continue
+                        face_crop = frame[y:y+h, x:x+w]  # frame es BGR
+                        if face_crop.size == 0:
+                            print("face_crop vacío, saltando.")
+                            continue
 
-                    face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # OK: BGR -> GRAY
-                    face_gray = cv2.resize(face_gray, (100, 100))
-                    queue.detected.put(face_gray)
-                    mp_drawing.draw_detection(frame, detection) 
-                queue.show_queue.put(frame)
-            else:
-                print("cara no detectada------")
-                queue.show_queue.put(frame)
+                        face_gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)  # Convertir a escala de grises
+                        face_gray = cv2.resize(face_gray, (100, 100))
+                        queue.detected.put(face_gray)
+                        mp_drawing.draw_detection(frame, detection)
+
+                else:
+                    print("cara no detectada------")
+
+                # Intenta poner el frame en la cola de visualización
+                try:
+                    queue.show_queue.put(frame, timeout=0.1)
+                except Full:
+                    pass  # Descartar el frame si la cola está llena
+
+            except Empty:
+                # Si la cola está vacía, simplemente saltamos este ciclo sin detener el thread
+                print("[Detecting] Cola vacía, esperando por un nuevo frame...")
+                continue  # Reinicia el ciclo sin bloqueos
 
 
 
