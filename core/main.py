@@ -268,8 +268,8 @@ def detener_run():
 # ========================================
 # ASIGNAR CALLBACKS
 # ========================================
-BTN_REGISTRAR.when_pressed = ejecutar_registro
-BTN_RUN.when_pressed = ejecutar_run
+#BTN_REGISTRAR.when_pressed = ejecutar_registro
+#BTN_RUN.when_pressed = ejecutar_run
 
 # ========================================
 # LOOP PRINCIPAL
