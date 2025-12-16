@@ -60,7 +60,7 @@ else:
 # ========================================
 # IMPORTAR CONFIGURACIÓN GLOBAL
 # ========================================
-from config import LED_PIN, BTN_DETENER, led, camIndex, PATH_REGISTER, PATH_IMAGENES, MODEL_PATH
+from config import LED_PIN, BTN_DETENER, led, camIndex, PATH_REGISTER, MODEL_PATH
 
 
 
@@ -87,12 +87,12 @@ if camIndex is None:
     camIndex = 0
 
 
-def run_camera_thread(frames, duracion, path, camera_index=None, dni=None):
+def run_camera_thread(duracion, path=None, queue_frames = None, camera_index=None, dni=None):
     """
     Lanza el hilo de la cámara. Si no se pasa `camera_index`, usa el `camIndex` detectado.
     """
     idx = camera_index if camera_index is not None else camIndex
-    t_camera = threading.Thread(target=camera.camara_run, args=(frames, duracion, path, idx, dni))
+    t_camera = threading.Thread(target=camera.camara_run, args=(queue_frames, duracion, path, idx, dni))
     t_camera.start()
     hilos_activos.append(t_camera)
     return t_camera
@@ -195,7 +195,8 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
     stop_event.clear()  # Limpiar stop_event al inicio
 
     # usar camIndex detectado por defecto
-    rc = run_camera_thread(frames, 8, PATH_REGISTER, camera_index=camIndex, dni=dni)
+    rc = run_camera_thread(8, PATH_REGISTER, camera_index=camIndex, dni=dni)
+
     rc.join()
     
     if stop_event.is_set():
@@ -252,7 +253,9 @@ def ejecutar_run():
     print("=== INICIANDO RUN (10 segundos) ===")
     print("="*50 + "\n")
     
-    run_camera_thread(frames, 10, PATH_IMAGENES)
+    run_camera_thread(1, queue_frames=frames)
+    #def run_camera_thread(duracion, path=None, quee_frames = None, camera_index=None, dni=None):
+
     run_detect_thread()
     run_recognition_thread(config.recognizer, config.names_labels)
     
@@ -293,19 +296,10 @@ BTN_DETENER.when_pressed = detener_run
 try:
     if IS_RASPBERRY:
         print("\n✅ Sistema iniciado - Esperando botones físicos...")
-        print("📌 BTN_REGISTRAR (GPIO 23) - Registrar nuevo usuario")
-        print("📌 BTN_RUN (GPIO 24) - Iniciar reconocimiento")
-        print("Presiona Ctrl+C para salir\n")
-        while True:
-            time.sleep(0.1)
+
     else:
         print("\n✅ Sistema iniciado - Modo simulación Windows")
-        print("="*50)
-        print("CONTROLES DE TECLADO:")
-        print("  1 - Registrar nuevo usuario")
-        print("  2 - Iniciar reconocimiento (RUN)")
-        print("  q - Salir")
-        print("="*50 + "\n")
+
         
 
 except KeyboardInterrupt:
