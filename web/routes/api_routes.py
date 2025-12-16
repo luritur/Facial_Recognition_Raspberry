@@ -13,6 +13,7 @@ from core.main import run_entrenar_modelo_thread
 # from core.gestion.gestion_empleados import get_empleados_registrados
 import core.gestion.gestion_empleados as gestion_empleados
 from core.bd.bd_functions import obtener_empleados_lista
+from core.bd.bd_functions import obtener_minutos_totales_actuales
 
 
 # Variables globales para gestión de estado
@@ -237,9 +238,63 @@ def obtener_empleados():
         'version': gestion_empleados.empleados_version
     })
 
+# @api_bp.route('/empleados/esperar-cambios', methods=['GET'])
+# def esperar_cambios():
+#     """Long polling: espera hasta que haya cambios"""
+#     version_actual = int(request.args.get('version', 0))
+#     timeout = 30
+#     inicio = time.time()
+    
+#     print(f"[LONG POLLING] 🔍 Cliente esperando cambios. Versión actual: {version_actual}")
+#     print(f"[LONG POLLING] 📊 Versión del servidor: {gestion_empleados.empleados_version}")
+    
+#     while (time.time() - inicio) < timeout:
+#         with gestion_empleados.empleados_lock:
+#             if gestion_empleados.empleados_version > version_actual:
+#                 print(f"[LONG POLLING] 🎉 ¡Cambio detectado! {gestion_empleados.empleados_version} > {version_actual}")
+#                 print(f"[LONG POLLING] 📦 Enviando: {gestion_empleados.ultimo_cambio}")
+
+#                 tipo_cambio = gestion_empleados.ultimo_cambio['tipo']
+#                 empleado_data = gestion_empleados.ultimo_cambio['empleado']
+                
+#                 # Si es actualización de estado, obtener datos completos de la BD
+#                 if tipo_cambio == 'actualizado':
+#                     dni = empleado_data['dni']
+#                     empleados = obtener_empleados_lista()
+                    
+#                     for emp in empleados:
+#                         if emp.dni == dni:
+#                             empleado_data = {
+#                                 'dni': emp.dni,
+#                                 'nombre': emp.nombre,
+#                                 'email': emp.email,
+#                                 'jornada': emp.jornada,
+#                                 'horas': emp.horas,
+#                                 'estado': emp.estado  # Estado actualizado de la BD
+#                             }
+#                             break
+                
+#                 return jsonify({
+#                     'success': True,
+#                     'cambio': True,
+#                     'version': gestion_empleados.empleados_version,
+#                     'tipo': tipo_cambio,
+#                     'empleado': empleado_data
+#                 })
+        
+#         time.sleep(0.5)
+    
+#     print(f"[LONG POLLING] ⏰ Timeout. No hubo cambios.")
+#     return jsonify({
+#         'success': True,
+#         'cambio': False,
+#         'version': version_actual
+#     })
+
 @api_bp.route('/empleados/esperar-cambios', methods=['GET'])
 def esperar_cambios():
     """Long polling: espera hasta que haya cambios"""
+    
     version_actual = int(request.args.get('version', 0))
     timeout = 30
     inicio = time.time()
@@ -263,13 +318,33 @@ def esperar_cambios():
                     
                     for emp in empleados:
                         if emp.dni == dni:
+                            # Calcular minutos totales en tiempo real
+                            minutos_totales = obtener_minutos_totales_actuales(emp.dni)
+                            
+                            # Calcular progreso
+                            minutos_jornada = emp.jornada * 60
+                            progreso = min((minutos_totales / minutos_jornada) * 100, 100)
+                            
+                            # Formatear tiempo
+                            horas = minutos_totales // 60
+                            minutos = minutos_totales % 60
+                            horas_formateadas = f"{horas}h {minutos}m"
+                            
+                            # Verificar si completó jornada
+                            jornada_completada = minutos_totales >= minutos_jornada
+                            
                             empleado_data = {
                                 'dni': emp.dni,
                                 'nombre': emp.nombre,
                                 'email': emp.email,
                                 'jornada': emp.jornada,
-                                'horas': emp.horas,
-                                'estado': emp.estado  # Estado actualizado de la BD
+                                'minutos_trabajados': emp.minutos_trabajados,
+                                'minutos_totales': minutos_totales,
+                                'estado': emp.estado,
+                                'progreso': round(progreso, 1),
+                                'horas_formateadas': horas_formateadas,
+                                'jornada_completada': jornada_completada,
+                                'trabajando_desde': emp.hora_entrada.isoformat() if emp.hora_entrada else None
                             }
                             break
                 
@@ -289,6 +364,10 @@ def esperar_cambios():
         'cambio': False,
         'version': version_actual
     })
+
+
+
+
 
 @api_bp.route('/api/delete_employee', methods=['POST'])
 def api_delete_employee():

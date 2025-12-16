@@ -693,9 +693,6 @@ function openModal() {
 }
 
 function entrenarModelo() {
-    if (!confirm('¿Iniciar entrenamiento del modelo?\n\nEsto puede tardar unos minutos.')) {
-        return;
-    }
     
     fetch('api/api/entrenarModelo', { method: 'POST' })
         .then(response => {
