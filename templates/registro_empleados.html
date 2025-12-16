@@ -806,7 +806,6 @@ function iniciarPollingProgreso() {
                         // Éxito
                         setTimeout(() => {
                             cerrarModalProgreso();
-                            alert('✅ Modelo entrenado correctamente\n\nYa puedes usar el reconocimiento facial.');
                             location.reload();
                         }, 1500);
                     } else if (data.progreso === -1) {
