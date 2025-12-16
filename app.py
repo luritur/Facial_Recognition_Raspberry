@@ -1,7 +1,6 @@
 import os
 from web import create_app
 from config import Config
-from core.bd.bd_functions import crear_base_datos
 
 # Rutas de configuración
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"

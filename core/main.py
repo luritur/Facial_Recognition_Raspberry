@@ -16,6 +16,7 @@ import core.recognition.train_LBPH as train
 from core.control import hilos_activos
 from core.control import stop_event
 import core.control as control
+import core.control as control
 
 import config
 from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
@@ -133,8 +134,7 @@ def run_entrenar_modelo_thread():
         
 
 def train_model():
-    import core.control as control
-    
+    global en_ejecucion
     try:
         control.entrenamiento_progreso = 0
         control.entrenamiento_mensaje = "Iniciando entrenamiento..."
@@ -156,6 +156,22 @@ def train_model():
         
         control.entrenamiento_progreso = 100
         control.entrenamiento_mensaje = "¡Entrenamiento completado!"
+
+        if(en_ejecucion): #cuando se entrena el modelo, si el reconocimiento se estaba ejecutando, se detiene y se vuelve a ejecutar con el nuevo modelo
+            print("⏸️ Pausando reconocimiento/acción en curso para reanudar con el nuevo modelo..")
+            detener_run()
+            # Esperar un poco a que los hilos terminen y la cámara quede libre
+            wait_start = time.time()
+            while hilos_activos:
+                if time.time() - wait_start > 6:
+                    print("⚠️ Tiempo de espera por liberación de hilos excedido, continuando de todas formas")
+                    break
+                time.sleep(0.1)
+            time.sleep(0.2)
+
+            stop_event.clear()  # Limpiar stop_event al inicio
+            print("▶️ Reanudando reconocimiento con el nuevo modelo...")
+            ejecutar_run()
         
         print(f"✅ MODELO ENTRENADO CON TODOS LOS EMPLEADOS: {config.names_labels}")
         print("=== REGISTRO COMPLETADO ===\n")
