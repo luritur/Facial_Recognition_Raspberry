@@ -10,6 +10,7 @@ from core.gestion.gestion_empleados import registrar_reconocimiento
 import time
 from core.gestion.gestion_empleados import notificar_empleado_actualizado
 from core.bd.bd_functions import actualizar_estado_empleado
+from config import led
 frames = queue.detected
 THRESHOLD = 85  # Ajusta segun los resultados que veas
 
@@ -61,6 +62,9 @@ def recognition_run(recognizer, names_labels): #OJOJO como hacer para cerrar el 
             estado_empleados[dni] = nuevo_estado
             
             print(f"✅ Se ha reconocido al usuario: {dni}")
+            led.on()
+            time.sleep(0.5)
+            led.off()
             print(f"🔄 Cambiando estado: {estado_actual} → {nuevo_estado}")
             
             # ⭐ CRÍTICO: Actualizar en la base de datos
