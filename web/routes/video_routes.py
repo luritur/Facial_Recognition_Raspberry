@@ -83,9 +83,9 @@ def gen_frames():
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                        
-            except GeneratorExit:  # ← NUEVO: Captura específica para desconexión
-                print("[VIDEO_FEED] 🔌 Cliente desconectado")
-                break  # ← NUEVO: Salir del bucle elegantemente
+            #except GeneratorExit:  # ← NUEVO: Captura específica para desconexión
+                #print("[VIDEO_FEED] 🔌 Cliente desconectado")
+                #break  # ← NUEVO: Salir del bucle elegantemente
                        
             except Exception as e:
                 print(f"[VIDEO_FEED] ❌ Error en yield: {e}")
