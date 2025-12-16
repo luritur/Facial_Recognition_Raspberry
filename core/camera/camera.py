@@ -33,6 +33,10 @@ def _open_camera_with_retries(camera_index, retries=3, delay=1.0):
 
 def camara_run(frames, duracion,path, camera_index, dni_persona=None):  
     cap = _open_camera_with_retries(camera_index, retries=4, delay=0.8)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+    cap.set(cv2.CAP_PROP_FPS, 15)
+
     if cap is None:
         print(f"ERROR: No se pudo abrir la camara index={camera_index} tras varios intentos")
         return
