@@ -35,8 +35,7 @@ else:
                 self.when_pressed()
 
 LED_PIN = 17
-BTN_RUN = Button(24, pull_up=True)
-BTN_REGISTRAR = Button(23, pull_up=True)
+BTN_DETENER = Button(23, pull_up=True)
 led = LED(LED_PIN)
 camIndex = 0
 

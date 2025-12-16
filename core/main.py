@@ -60,7 +60,7 @@ else:
 # ========================================
 # IMPORTAR CONFIGURACIÓN GLOBAL
 # ========================================
-from config import LED_PIN, BTN_RUN, BTN_REGISTRAR, led, camIndex, PATH_REGISTER, PATH_IMAGENES, MODEL_PATH
+from config import LED_PIN, BTN_DETENER, led, camIndex, PATH_REGISTER, PATH_IMAGENES, MODEL_PATH
 
 
 
@@ -236,18 +236,6 @@ def ejecutar_run():
     run_detect_thread()
     run_recognition_thread(config.recognizer, config.names_labels)
     
-    # Programar liberación automática después de 12 segundos (10 seg + margen)
-    def liberar_en_ejecucion():
-        global en_ejecucion
-        if not stop_event.is_set():  # Solo si no se detuvo manualmente
-            en_ejecucion = False
-            print("\n=== RUN COMPLETADO AUTOMÁTICAMENTE ===\n")
-    
-    timer = threading.Timer(12.0, liberar_en_ejecucion)
-    timer.daemon = True
-    timer.start()
-    hilos_activos.append(timer)
-    
     print("\n=== RUN INICIADO (se liberará automáticamente en 12 segundos) ===\n")
     return True #para ver si se ha iniciado correctamente ---> para el error en el reconocimiento si no hay nadie registrado
 
@@ -262,14 +250,12 @@ def detener_run():
     queue.clear_queues()
     run_detect_thread.started = False
     run_recognition_thread.started = False
-        
-
     print("✅ Reconocimiento detenido de forma segura")
 # ========================================
 # ASIGNAR CALLBACKS
 # ========================================
-#BTN_REGISTRAR.when_pressed = ejecutar_registro
-#BTN_RUN.when_pressed = ejecutar_run
+
+BTN_DETENER.when_pressed = detener_run
 
 # ========================================
 # LOOP PRINCIPAL

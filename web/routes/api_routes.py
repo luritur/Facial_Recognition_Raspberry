@@ -65,13 +65,6 @@ def detectar_stop():
         "message": "Reconocimiento detenido"
     })
 
-@api_bp.route('/api/reconocimiento/estado', methods=['GET'])
-def obtener_estado_reconocimiento():
-    """Devuelve si el reconocimiento está activo"""
-    global reconocimiento_activo
-    return jsonify({
-        "activo": reconocimiento_activo
-    })
 
 @api_bp.route('/api/check_user_exists', methods=['POST'])
 def api_check_user_exists():
