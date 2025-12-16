@@ -142,13 +142,13 @@ def train_model():
         
         control.entrenamiento_progreso = 20
         control.entrenamiento_mensaje = "Cargando imágenes de empleados..."
-        time.sleep(0.5)  # Pequeña pausa para que se vea el progreso
+        time.sleep(0.1)  # Pequeña pausa para que se vea el progreso
         
         config.xml = train.trainLBPH(PATH_REGISTER)
         
         control.entrenamiento_progreso = 70
         control.entrenamiento_mensaje = "Creando modelo de reconocimiento..."
-        time.sleep(0.3)
+        time.sleep(0.1)
         
         config.recognizer = cv2.face.LBPHFaceRecognizer_create()
         config.recognizer.read(config.xml)
@@ -276,7 +276,6 @@ def ejecutar_run():
     run_recognition_thread(config.recognizer, config.names_labels)
     
     print("\n=== RUN INICIADO (se liberará automáticamente en 12 segundos) ===\n")
-    en_ejecucion = False
     return True #para ver si se ha iniciado correctamente ---> para el error en el reconocimiento si no hay nadie registrado
 
 def detener_run():
