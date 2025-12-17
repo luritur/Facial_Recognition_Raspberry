@@ -38,19 +38,25 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
     global reconocimiento_activo
+    
+    # Obtener el ID actual ANTES de iniciar (para sincronización con cliente)
     id_actual = gestion_empleados.empleados_version
+    print(f"[API] 🔍 ID actual del servidor antes de iniciar: {id_actual}")
+    
     iniciado = ejecutar_run()
     
     if iniciado:
         reconocimiento_activo = True
+        print(f"[API] ✅ Reconocimiento iniciado. Enviando current_id: {id_actual}")
         return jsonify({
             "status": "ok",
             "message": "Reconocimiento iniciado",
-            "current_id": id_actual
+            "current_id": id_actual  # El cliente lo usará para sincronizarse
         })
     else:
         # No se pudo iniciar (no hay modelo, etc.)
         reconocimiento_activo = False
+        print(f"[API] ❌ No se pudo iniciar reconocimiento")
         return jsonify({
             "status": "error",
             "message": "No se pudo iniciar el reconocimiento. Verifica que el modelo esté entrenado."

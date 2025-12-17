@@ -433,6 +433,13 @@ let lastRecognitionId = 0;
 let isPolling = false;
 let totalRecognitions = 0;
 
+// IMPORTANTE: Recuperar último ID del localStorage al cargar la página
+const savedId = localStorage.getItem('lastRecognitionId');
+if (savedId) {
+    lastRecognitionId = parseInt(savedId);
+    console.log(`🔄 Recuperado último ID del localStorage: ${lastRecognitionId}`);
+}
+
 // Actualizar reloj
 function updateTime() {
     const now = new Date();
@@ -523,10 +530,16 @@ function startRecognition() {
         })
         .then(data => {
             console.log('Reconocimiento iniciado:', data);
-            if (data.current_id !== undefined) {
+            
+            // Solo actualizar si el servidor devuelve un ID mayor
+            if (data.current_id !== undefined && data.current_id > lastRecognitionId) {
                 lastRecognitionId = data.current_id;
+                localStorage.setItem('lastRecognitionId', lastRecognitionId);
                 console.log(`📍 Sincronizado con servidor. Último ID: ${lastRecognitionId}`);
+            } else {
+                console.log(`ℹ️ Manteniendo ID local: ${lastRecognitionId}`);
             }
+            
             // Iniciar polling si no está activo
             if (!isPolling) {
                 pollRecognitions();
@@ -584,8 +597,8 @@ function toggleFullscreen() {
 }
 
 // Iniciar polling automáticamente al cargar la página
-
-console.log('Iniciando long polling de reconocimientos...');
+console.log('🚀 Iniciando long polling automático de reconocimientos...');
+pollRecognitions();
     
 </script>
 {% endblock %}
