@@ -80,4 +80,4 @@ Ejecutado en un hilo independiente (t_entrenar_modelo)
 
 Permite que el sistema continúe funcionando mientras el modelo se entrena
 
-El entrenamiento utiliza los directorios de cada empleado (DNI) como etiquetas
+El entrenamiento utiliza los directorios de cada empleado (DNI) como etiquetas.
