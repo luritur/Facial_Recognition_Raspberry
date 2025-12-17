@@ -38,7 +38,7 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
     global reconocimiento_activo
-    id_actual = gestion_empleados.ultimo_id_reconocimiento
+    id_actual = gestion_empleados.empleados_version
     iniciado = ejecutar_run()
     
     if iniciado:
@@ -422,19 +422,20 @@ def recognition_event():
     start = time.time()
 
     print(f"[RECOGNITION POLLING] 👀 Cliente esperando evento. Último cliente ID: {last_client_id}")
-    print(f"[RECOGNITION POLLING] 🧠 Último ID del servidor: {gestion_empleados.ultimo_id_reconocimiento}")
+    print(f"[RECOGNITION POLLING] 🧠 Último ID del servidor: {gestion_empleados.empleados_version}")
 
     while (time.time() - start) < timeout:
         with gestion_empleados.empleados_lock:  
-            if gestion_empleados.ultimo_id_reconocimiento > last_client_id:
+            if gestion_empleados.empleados_version > last_client_id:
                 print(f"[RECOGNITION POLLING] 🎉 Nuevo reconocimiento detectado!")
-                print(f"[RECOGNITION POLLING] 📢 Mensaje: {gestion_empleados.ultima_persona_reconocida}")
-
+                print(f"[RECOGNITION POLLING] 📢 Mensaje: {gestion_empleados.ultimo_cambio}")
+                empleado = gestion_empleados.ultimo_cambio["empleado"]
+                nombre = empleado["nombre"]
                 return jsonify({
                     'success': True,
                     'nuevo': True,
-                    'id': gestion_empleados.ultimo_id_reconocimiento,
-                    'mensaje': gestion_empleados.ultima_persona_reconocida,
+                    'id': gestion_empleados.empleados_version,
+                    'mensaje': nombre,
                     'confidence': gestion_empleados.confidence
                 })
 

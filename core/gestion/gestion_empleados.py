@@ -6,10 +6,6 @@ from core.bd.bd_functions import get_empleado_name
 empleados_version = 0
 empleados_lock = threading.Lock()
 ultimo_cambio = None
-
-# Para reconocimiento:
-ultimo_id_reconocimiento = 0
-ultima_persona_reconocida = None
 confidence = 0.0
 
 
@@ -84,10 +80,12 @@ def notificar_nuevo_empleado(dni, nombre, email, jornada, minutos_trabajados=0, 
     print(f"[NOTIFICACION] ✅ Notificación completada para: {nombre}")
 
 
-def notificar_empleado_actualizado(dni, estado):
+def notificar_empleado_actualizado(dni, estado, confidence_param):
     """Notifica actualización de estado de un empleado"""
-    global empleados_version, ultimo_cambio
-    
+    global empleados_version, ultimo_cambio, confidence
+
+    confidence = round(confidence_param, 2)
+
     with empleados_lock:
         # Obtener datos completos del empleado
         from core.bd.bd_functions import obtener_minutos_totales_actuales
@@ -136,11 +134,3 @@ def notificar_empleado_actualizado(dni, estado):
             print(f"[NOTIFICACION] 🔔 Notificado actualización: {dni} - estado {estado}")
 
 
-def registrar_reconocimiento(dni, confidence_param):
-    """Registra un reconocimiento facial para notificar a la UI"""
-    global ultimo_id_reconocimiento, ultima_persona_reconocida, confidence
-
-    confidence = round(confidence_param, 2)
-    ultimo_id_reconocimiento += 1
-    ultima_persona_reconocida = get_empleado_name(dni)
-    ultima_persona_reconocida = f"Se ha reconocido a {ultima_persona_reconocida}"
