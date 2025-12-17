@@ -191,21 +191,7 @@ en_ejecucion = False
 
 def ejecutar_registro(nombre_empleado, dni, email, jornada):
     global en_ejecucion
-    # Detectar si había reconocimiento / detección en marcha
-    # reconocimiento_ejecutandose = bool(getattr(run_recognition_thread, "started", False) or getattr(run_detect_thread, "started", False) or en_ejecucion)
 
-    # if reconocimiento_ejecutandose:
-    #     print("⏸️ Pausando reconocimiento/acción en curso para realizar registro...")
-    #     detener_run()
-    #     # Esperar un poco a que los hilos terminen y la cámara quede libre
-    #     wait_start = time.time()
-    #     while hilos_activos:
-    #         if time.time() - wait_start > 6:
-    #             print("⚠️ Tiempo de espera por liberación de hilos excedido, continuando de todas formas")
-    #             break
-    #         time.sleep(0.1)
-    #     time.sleep(0.2)
-    #     en_ejecucion = False
 
     en_ejecucion = True
     stop_event.clear()  # Limpiar stop_event al inicio
@@ -240,10 +226,7 @@ def ejecutar_registro(nombre_empleado, dni, email, jornada):
     print(f"Se capturaron {num_fotos} imágenes de {nombre_empleado} DNI:{dni}")
     print(f"✅ Registro completado para:{nombre_empleado} DNI:{dni} ")
     en_ejecucion = False
-    # if reconocimiento_ejecutandose:
-    #     time.sleep(0.2)
-    #     print("▶️ Reanudando reconocimiento después del registro...")
-    #     ejecutar_run()
+
 
 def ejecutar_run():
 
