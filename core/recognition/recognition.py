@@ -4,7 +4,6 @@ import numpy as np
 import core.queues.colas as queue
 import core.detection.detection as detection 
 from core.control import stop_event
-from core.gestion.gestion_empleados import registrar_reconocimiento
 import time
 from core.gestion.gestion_empleados import notificar_empleado_actualizado
 from core.bd.bd_functions import registrar_entrada_empleado, registrar_salida_empleado, obtener_empleados_lista
@@ -118,11 +117,9 @@ def recognition_run(recognizer, names_labels):
                 print(f"⚠️ Estado desconocido: {estado_actual}")
                 continue
             
-            # Registrar reconocimiento para el sistema
-            registrar_reconocimiento(dni, confidence)
             
             # Notificar cambio a la interfaz web
-            notificar_empleado_actualizado(dni, nuevo_estado)
+            notificar_empleado_actualizado(dni, nuevo_estado, confidence)
             
             print(f"🔄 Cambio completado: {estado_actual} → {nuevo_estado}")
             print("=" * 60)
