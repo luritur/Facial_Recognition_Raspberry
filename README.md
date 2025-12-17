@@ -1,4 +1,4 @@
-Sistema de Registro y Fichaje con Reconocimiento Facial
+Sistema de Registro y Fichaje con Reconocimiento Facial.
 Descripción general
 
 Este proyecto consiste en un sistema de registro y control horario de empleados mediante detección y reconocimiento facial, diseñado para funcionar en tiempo real y optimizado para su ejecución en Raspberry Pi.
