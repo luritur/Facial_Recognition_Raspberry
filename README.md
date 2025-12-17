@@ -1,70 +1,83 @@
+Sistema de Registro y Fichaje con Reconocimiento Facial
+Descripción general
 
+Este proyecto consiste en un sistema de registro y control horario de empleados mediante detección y reconocimiento facial, diseñado para funcionar en tiempo real y optimizado para su ejecución en Raspberry Pi.
 
-# link: https://gist.githz  ub.com/QurratulWidiana/29cf390403567aeb9297d6b15e5ef947
-# link: https://docs.opencv.org/4.x/
+El sistema permite registrar empleados, reconocerlos automáticamente a través de la cámara y reflejar su estado laboral en un dashboard web actualizado en tiempo real.
 
-# Facial_Recognition_Raspberry
+Tecnologías de visión artificial
 
-# doc: https://www.raspberrypi.com/documentation/computers/camera_software.html
+Detección facial:
+Se utiliza MediaPipe, un modelo ligero y optimizado de deep learning, ampliamente empleado en sistemas embebidos y aplicaciones de visión en tiempo real.
 
-# guide: camera usb: https://raspberrypi-guide.github.io/electronics/using-usb-webcams
+Reconocimiento facial:
+Se emplea el modelo LBPH (Local Binary Patterns Histograms), adecuado para dispositivos con recursos limitados y eficaz con imágenes de baja resolución, lo que permite mejorar el rendimiento general del sistema.
 
-# link: configure Haar cascade opencv: https://pyimagesearch.com/2021/04/12/opencv-haar-cascades/
-# link: EigenFaces recognition: https://pyimagesearch.com/2021/05/10/opencv-eigenfaces-for-face-recognition/#pyis-cta-modal
+Arquitectura web
 
-# Pasos: 
-#   1.Deteccion facial 
-#       1.1: 
+Backend: Flask
 
-# link: https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalcatface.xml
+Frontend: HTML, CSS y JavaScript
 
-# link: https://github.com/austinjoyal/haar-cascade-files
+El uso de JavaScript permite la actualización en tiempo real del dashboard, los registros y las notificaciones sin necesidad de recargar la página.
 
-#   2.Reconocimiento facial: comparar la cara con las registradas 
-#       2.1: Extraer features/atributos de la cara
-#       2.2: Medir distancia de cada atributo de la cara respecto a ese atributo de todas las caras guardadas
+Funcionalidades principales
+Fichaje de empleados
 
+Dashboard que muestra una tabla con todos los empleados registrados y su estado actual:
 
-# link: https://gist.github.com/QurratulWidiana/29cf390403567aeb9297d6b15e5ef947
+🔴 Fuera del trabajo
 
+🟡 Dentro del trabajo
 
-#       2.3: Probar threshold para encontrar el threshold adecuado
-#       2.4: Si es igual o mayor al threshold, se reconoce y sino NO
+🟢 Jornada completada
 
+Incluye una barra de progreso que indica las horas trabajadas, actualizada en tiempo real conforme se reconoce al empleado.
 
-#   3.El output: altavoz/web/....
+Registro de empleados
 
+Permite visualizar los empleados registrados, añadir nuevos usuarios y entrenar el modelo de reconocimiento facial con todos los empleados de forma conjunta.
 
+Cámara en directo
 
+Permite iniciar y detener el reconocimiento facial y muestra en tiempo real los empleados reconocidos a través de la cámara.
 
-# HILOS A LANZAR: 
+Arquitectura concurrente (Threads y colas)
 
-#   1. Camara y añade a cola los frames 
-#   2. Deteccion cara 
-#   3. Reconocimiento cara -- if(reconocido):altavoz, break;
-#   4. Mostrar resultados en web/frame
+Con el objetivo de maximizar el rendimiento y el procesamiento en tiempo real, el sistema utiliza múltiples hilos y colas, evitando un enfoque secuencial.
 
+Registro
 
+Hilo de cámara (t_camara)
 
-# Logica de funcionamiento: 
+Captura frames y guarda únicamente aquellos en los que se detecta una cara
 
-# HACER UN "mini csv o bd"
+Los frames se envían a la cola show_queue para su visualización en la web
 
-#   1.Si pulsas 1 vez: foto de tu cara y se guarda en carpeta de caras registradas
-#   2.Si pulsas otro boton se INICIA el proceso de los hilos
-#       2.1 OJO CAMARA: 15-30 frames por segundo y LIMITAR a 10 segundos MAX (ir viendo estos valores para optimizar)
+Reconocimiento
 
-#       2.2 SI pulsas PAUSA DE EMERGENCIA
-#       2.3 Si pasa el tiempo y no te reconoce SE ACABA SIN RECONOCER 
-#       2.4 Si pasa el tiempo y se RECONOCE: se guarda el "TIMESTAMP" de entrada/salida dependiendo de lo que sea en la BD
+Se utilizan tres hilos independientes:
 
-# SI DA TIEMPO: IMPLEMENTAR PARTE VISUAL(WEB)/ALTAVOZ
+t_camara: captura continua de frames
 
+t_detection: detección facial sobre los frames capturados
 
+t_recognition: reconocimiento facial usando el modelo entrenado
 
+Colas empleadas:
 
-# DETECTAR CON TECNICAS ACTUALES: mediaPipe: 
-- # https://mediapipe.readthedocs.io/en/latest/getting_started/python.html?utm_source=chatgpt.com
-- # https://mediapipe.readthedocs.io/en/latest/solutions/face_detection.html
+frames: frames capturados por la cámara
 
-# RECONOCIMIENTO CON TECNICAS ACTUALES: LBPH
+detected: frames en los que se ha detectado una cara
+
+show_queue: frames mostrados en la interfaz web
+
+Este diseño permite que la cámara capture imágenes de forma continua sin bloquearse durante la detección o el reconocimiento.
+
+Entrenamiento del modelo
+
+Ejecutado en un hilo independiente (t_entrenar_modelo)
+
+Permite que el sistema continúe funcionando mientras el modelo se entrena
+
+El entrenamiento utiliza los directorios de cada empleado (DNI) como etiquetas
