@@ -39,24 +39,33 @@ api_bp = Blueprint('api', __name__, url_prefix='/api')
 def detectar_start():
     global reconocimiento_activo
     
-    # Obtener el ID actual ANTES de iniciar (para sincronización con cliente)
-    id_actual = gestion_empleados.empleados_version
-    print(f"[API] 🔍 ID actual del servidor antes de iniciar: {id_actual}")
+    print(f"\n{'='*60}")
+    print(f"[API INIT] 🎬 Solicitud de inicio de reconocimiento")
+    
+    # ✅ CRÍTICO: Obtener el ID actual del servidor
+    with gestion_empleados.empleados_lock:
+        id_actual = gestion_empleados.empleados_version
+    
+    print(f"   - ID actual del servidor (empleados_version): {id_actual}")
+    print(f"   - Estado reconocimiento_activo: {reconocimiento_activo}")
     
     iniciado = ejecutar_run()
     
     if iniciado:
         reconocimiento_activo = True
-        print(f"[API] ✅ Reconocimiento iniciado. Enviando current_id: {id_actual}")
+        print(f"   ✅ Reconocimiento iniciado correctamente")
+        print(f"   - Enviando current_id al cliente: {id_actual}")
+        print(f"{'='*60}\n")
         return jsonify({
             "status": "ok",
             "message": "Reconocimiento iniciado",
-            "current_id": id_actual  # El cliente lo usará para sincronizarse
+            "current_id": id_actual,  # ✅ Enviar el ID correcto del servidor
+            "reset": True  # ✅ Indicar al cliente que debe resetear su ID
         })
     else:
-        # No se pudo iniciar (no hay modelo, etc.)
         reconocimiento_activo = False
-        print(f"[API] ❌ No se pudo iniciar reconocimiento")
+        print(f"   ❌ No se pudo iniciar reconocimiento")
+        print(f"{'='*60}\n")
         return jsonify({
             "status": "error",
             "message": "No se pudo iniciar el reconocimiento. Verifica que el modelo esté entrenado."
@@ -417,7 +426,6 @@ def cancelar_registro():
 
 
 
-
 @api_bp.route('/recognition_event', methods=['GET'])
 def recognition_event():
     """
@@ -427,25 +435,68 @@ def recognition_event():
     timeout = 30
     start = time.time()
 
-    print(f"[RECOGNITION POLLING] 👀 Cliente esperando evento. Último cliente ID: {last_client_id}")
-    print(f"[RECOGNITION POLLING] 🧠 Último ID del servidor: {gestion_empleados.empleados_version}")
+    print(f"\n{'='*60}")
+    print(f"[RECOGNITION POLLING] 👀 Nueva conexión")
+    print(f"   - Cliente solicita desde ID: {last_client_id}")
+    print(f"   - Servidor tiene ID actual: {gestion_empleados.empleados_version}")
+    print(f"   - Diferencia: {gestion_empleados.empleados_version - last_client_id}")
+    print(f"{'='*60}\n")
 
+    # ✅ IMPORTANTE: Verificar PRIMERO si ya hay datos disponibles
+    with gestion_empleados.empleados_lock:
+        if gestion_empleados.empleados_version > last_client_id:
+            print(f"[RECOGNITION POLLING] 🎉 ¡Reconocimiento disponible INMEDIATAMENTE!")
+            print(f"   - Último cambio: {gestion_empleados.ultimo_cambio}")
+            empleado = gestion_empleados.ultimo_cambio.get("empleado", {})
+            nombre = empleado.get("nombre", "Desconocido")
+            confidence = getattr(gestion_empleados, 'confidence', 0)
+            
+            response_data = {
+                'success': True,
+                'nuevo': True,
+                'id': gestion_empleados.empleados_version,
+                'mensaje': nombre,
+                'confidence': confidence
+            }
+            print(f"   - Respuesta: {response_data}\n")
+            return jsonify(response_data)
+
+    # Si no hay datos, esperar por nuevos reconocimientos
+    iteration = 0
     while (time.time() - start) < timeout:
+        iteration += 1
+        
         with gestion_empleados.empleados_lock:  
             if gestion_empleados.empleados_version > last_client_id:
-                print(f"[RECOGNITION POLLING] 🎉 Nuevo reconocimiento detectado!")
-                print(f"[RECOGNITION POLLING] 📢 Mensaje: {gestion_empleados.ultimo_cambio}")
-                empleado = gestion_empleados.ultimo_cambio["empleado"]
-                nombre = empleado["nombre"]
-                return jsonify({
+                print(f"\n[RECOGNITION POLLING] 🎉 Nuevo reconocimiento detectado (iteración {iteration})")
+                print(f"   - Nuevo ID del servidor: {gestion_empleados.empleados_version}")
+                print(f"   - Último cambio: {gestion_empleados.ultimo_cambio}")
+                
+                empleado = gestion_empleados.ultimo_cambio.get("empleado", {})
+                nombre = empleado.get("nombre", "Desconocido")
+                confidence = getattr(gestion_empleados, 'confidence', 0)
+                
+                response_data = {
                     'success': True,
                     'nuevo': True,
                     'id': gestion_empleados.empleados_version,
                     'mensaje': nombre,
-                    'confidence': gestion_empleados.confidence
-                })
+                    'confidence': confidence
+                }
+                print(f"   - Respuesta: {response_data}\n")
+                return jsonify(response_data)
 
         time.sleep(0.5)
+
+    # ✅ IMPORTANTE: Devolver respuesta de timeout
+    print(f"[RECOGNITION POLLING] ⏰ Timeout sin cambios (esperó {timeout}s)")
+    print(f"   - ID sigue en: {gestion_empleados.empleados_version}\n")
+
+    return jsonify({
+        'success': True,
+        'nuevo': False,
+        'id': last_client_id  # ✅ Devolver el mismo ID que el cliente envió
+    })
 
     # No hubo cambios → mantener conexión viva
     print(f"[RECOGNITION POLLING] ⏰ Timeout sin cambios")
