@@ -14,8 +14,8 @@ from core.main import run_entrenar_modelo_thread
 import core.gestion.gestion_empleados as gestion_empleados
 from core.bd.bd_functions import obtener_empleados_lista
 from core.bd.bd_functions import obtener_minutos_totales_actuales
-
-
+import core.main as main
+import core.control as control
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
@@ -82,6 +82,17 @@ def detectar_stop():
     })
 
 
+@api_bp.route('/api/recognition_status', methods=['GET'])
+def recognition_status():
+    global reconocimiento_activo
+    
+    print(f"[API STATUS] 🔍 Consultando estado de reconocimiento: {reconocimiento_activo}")
+    
+    return jsonify({
+        "status": "ok",
+        "active": reconocimiento_activo
+    })
+
 @api_bp.route('/api/check_user_exists', methods=['POST'])
 def api_check_user_exists():
     """
@@ -141,10 +152,9 @@ def api_registrar():
         
         try:
             print(f"[API] Iniciando registro para: {nombre}. DNI; {dni}")
-                
+           
             ejecutar_registro(nombre, dni, email, jornada)
-
-                
+                        
         except Exception as e:
             print(f"[API] Error en registro: {e}")
         finally:
