@@ -881,6 +881,35 @@ function showStep(step) {
     }
     
     currentStep = step;
+}// Variable para guardar si el reconocimiento estaba activo antes del registro
+let recognitionWasActive = false;
+
+// 🔄 Reiniciar reconocimiento al cerrar la ventana/pestaña
+window.addEventListener('beforeunload', function(e) {
+    if (recognitionWasActive) {
+        console.log('🔄 Ventana cerrándose. Reiniciando reconocimiento...');
+        
+        // Usar sendBeacon para enviar la petición de forma fiable al cerrar
+        const data = new Blob([JSON.stringify({})], { type: 'application/json' });
+        navigator.sendBeacon('/api/api/initrecognition', data);
+    }
+});
+
+// Detener reconocimiento
+function stopRecognition() {
+    console.log('🔴 [STOP] Botón de detener presionado');
+    fetch('/api/api/stoprecognition', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            console.log('✅ [STOP] Reconocimiento detenido:', data);
+            isPolling = false;
+            
+            // ✅ Limpiar estado de memoria
+            recognitionWasActive = false;
+            
+            document.getElementById('statusText').textContent = 'Reconocimiento detenido';
+        })
+        .catch(err => console.error('❌ [STOP] Error al detener reconocimiento:', err));
 }
 
 function nextStep() {
@@ -958,15 +987,49 @@ function nextStep() {
             alert('Error comprobando usuario: ' + err);
         });
     } else if (currentStep === 2) {
-        // Preparar cámara
-        showStep(3);
-        
-        // Mostrar video feed después de un momento
-        setTimeout(() => {
-            document.getElementById('videoFeed').style.display = 'block';
-            document.querySelector('.camera-placeholder').style.display = 'none';
-        }, 500);
+        // 🔍 Comprobar si el reconocimiento está activo antes de continuar
+        fetch('/api/api/recognition_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.active) {
+                    console.log('⚠️ Reconocimiento activo detectado. Deteniéndolo...');
+                    recognitionWasActive = true;
+                    
+                    // Detener el reconocimiento
+                    return fetch('/api/api/stoprecognition', { method: 'POST' })
+                        .then(response => response.json())
+                        .then(() => {
+                            console.log('✅ Reconocimiento detenido para iniciar captura');
+                            proceedToCapture();
+                        });
+                } else {
+                    console.log('✅ Reconocimiento no activo. Continuando...');
+                    recognitionWasActive = false;
+                    proceedToCapture();
+                }
+            })
+            .catch(err => {
+                console.error('❌ Error comprobando estado de reconocimiento:', err);
+                // Continuar de todos modos
+                proceedToCapture();
+            });
     }
+}
+
+// Función auxiliar para proceder a la captura
+function proceedToCapture() {
+    setTimeout(() => {
+        console.log("Preparando captura de rostro");
+    }, 2000);
+    
+    // Preparar cámara
+    showStep(3);
+    
+    // Mostrar video feed después de un momento
+    setTimeout(() => {
+        document.getElementById('videoFeed').style.display = 'block';
+        document.querySelector('.camera-placeholder').style.display = 'none';
+    }, 500);
 }
 
 function prevStep() {
@@ -1060,7 +1123,13 @@ function actualCapture(nombre, dni, email, jornada) {
         
         if (data.status === 'ok') {
             document.getElementById('captureStatus').innerHTML = 
-                '<div class="alert alert-success">✅ ' + data.message + '<br><br>Redirigiendo...</div>';
+                '<div class="alert alert-success">✅ ' + data.message + '</div>';
+            
+            // ✅ Registro completado - recargar página
+            // El reconocimiento se reiniciará automáticamente al cerrar la ventana
+            // gracias al evento beforeunload si estaba activo
+            document.getElementById('captureStatus').innerHTML += 
+                '<div class="alert alert-info">Redirigiendo...</div>';
             
             setTimeout(() => {
                 location.reload();
