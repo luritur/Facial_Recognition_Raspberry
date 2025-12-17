@@ -1,5 +1,3 @@
-#con LBPH: https://www.geeksforgeeks.org/computer-vision/face-recognition-with-local-binary-patterns-lbps-and-opencv/?utm_source=chatgpt.com
-
 import cv2
 import os
 import numpy as np
@@ -89,12 +87,24 @@ def recognition_run(recognizer, names_labels):
                 print(f"🔴 SALIDA registrada para {empleado.nombre}")
                 resultado = registrar_salida_empleado(dni)
                 
+                if not resultado:
+                    print(f"⚠️ Error al registrar salida para {dni}")
+                    continue
+                
                 # Obtener estado actualizado después de calcular jornada
                 empleados_updated = obtener_empleados_lista()
+                empleado_actualizado = None
                 for emp in empleados_updated:
                     if emp.dni == dni:
-                        nuevo_estado = emp.estado
+                        empleado_actualizado = emp
                         break
+                
+                if empleado_actualizado:
+                    nuevo_estado = empleado_actualizado.estado
+                    print(f"📊 Jornada completada: {empleado_actualizado.ha_completado_jornada()}")
+                    print(f"⏱️ Minutos trabajados: {empleado_actualizado.minutos_trabajados} / {empleado_actualizado.jornada * 60}")
+                else:
+                    nuevo_estado = 'out'
                 
                 # Feedback LED (doble parpadeo para salida)
                 led.on()

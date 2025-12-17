@@ -139,10 +139,16 @@ def registrar_salida_empleado(dni):
         
         # Determinar estado según si completó la jornada
         minutos_jornada = empleado.jornada * 60
+        
+        print(f"[DB] 📊 Minutos trabajados: {empleado.minutos_trabajados}")
+        print(f"[DB] 📊 Minutos requeridos: {minutos_jornada}")
+        
         if empleado.minutos_trabajados >= minutos_jornada:
             empleado.estado = 'completado'
+            print(f"[DB] ✅ Jornada COMPLETADA - Estado: completado")
         else:
             empleado.estado = 'out'
+            print(f"[DB] ⚠️ Jornada INCOMPLETA - Estado: out")
         
         # Limpiar hora de entrada
         empleado.hora_entrada = None
