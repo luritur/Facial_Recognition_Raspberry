@@ -408,11 +408,13 @@
             </div>
         </div>
     </div>
-</div><script>
+</div>
+<script>
 let lastRecognitionId = 0;
 let isPolling = false;
 let totalRecognitions = 0;
 let pollCount = 0;
+let pollingController = null; // ✅ Controller para cancelar peticiones
 
 // Recuperar último ID del localStorage al cargar la página
 const savedId = localStorage.getItem('lastRecognitionId');
@@ -432,14 +434,28 @@ function updateTime() {
 setInterval(updateTime, 1000);
 updateTime();
 
-// Long Polling para reconocimientos
-async function pollRecognitions() {
-    if (isPolling) {
-        console.warn('⚠️ pollRecognitions ya está activo, evitando duplicado');
-        return;
+// ✅ Función para detener el polling completamente
+function stopPolling() {
+    if (pollingController) {
+        console.log('🛑 Cancelando polling anterior...');
+        pollingController.abort();
+        pollingController = null;
     }
+    isPolling = false;
+    console.log('✅ Polling detenido completamente');
+}
+
+// Long Polling para reconocimientos con AbortController
+async function pollRecognitions() {
+    // 🔴 CRÍTICO: Detener cualquier polling anterior
+    stopPolling();
+    
+    // Crear nuevo AbortController para este polling
+    pollingController = new AbortController();
     isPolling = true;
-    console.log('🚀 [POLL] Iniciando long polling...');
+    pollCount = 0; // Reiniciar contador
+    
+    console.log('🚀 [POLL] Iniciando nuevo long polling...');
 
     while (isPolling) {
         pollCount++;
@@ -447,7 +463,10 @@ async function pollRecognitions() {
         
         try {
             console.log(`📡 [POLL #${currentPollId}] Consultando con lastRecognitionId=${lastRecognitionId}`);
-            const response = await fetch(`/api/recognition_event?last=${lastRecognitionId}`);
+            
+            const response = await fetch(`/api/recognition_event?last=${lastRecognitionId}`, {
+                signal: pollingController?.signal // ✅ Permite cancelar la petición
+            });
             
             if (!response.ok) {
                 console.error(`❌ [POLL #${currentPollId}] Error HTTP: ${response.status}`);
@@ -458,19 +477,35 @@ async function pollRecognitions() {
             const data = await response.json();
             console.log(`📥 [POLL #${currentPollId}] Respuesta:`, data);
 
+            // ✅ Verificar si el polling fue cancelado durante la petición
+            if (!isPolling) {
+                console.log('⚠️ Polling cancelado durante petición');
+                break;
+            }
+
             if (data.success && data.nuevo) {
                 console.log(`🎉 [POLL #${currentPollId}] ¡NUEVO RECONOCIMIENTO! ID: ${data.id}, Nombre: ${data.mensaje}`);
                 lastRecognitionId = data.id;
                 localStorage.setItem('lastRecognitionId', lastRecognitionId);
                 addRecognitionMessage(data.mensaje, data.confidence);
                 totalRecognitions++;
-                document.getElementById('totalRecognitions').textContent = totalRecognitions;
+                if (document.getElementById('totalRecognitions')) {
+                    document.getElementById('totalRecognitions').textContent = totalRecognitions;
+                }
             } else {
                 console.log(`⏳ [POLL #${currentPollId}] Sin cambios (timeout normal)`);
             }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('✅ Polling cancelado correctamente (AbortError)');
+                break;
+            }
             console.error(`💥 [POLL #${currentPollId}] Error en long polling:`, error);
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Solo reintentar si el polling sigue activo
+            if (isPolling) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
         }
     }
     
@@ -552,13 +587,11 @@ function startRecognition() {
             
             console.log(`   - lastRecognitionId local DESPUÉS: ${lastRecognitionId}`);
             
-            // Iniciar polling si no está activo
-            if (!isPolling) {
-                console.log('   🚀 Iniciando polling...');
-                pollRecognitions();
-            } else {
-                console.log('   ⚠️ Polling ya está activo');
-            }
+            // 🔴 CRÍTICO: Siempre iniciar polling (stopPolling se encarga de detener el anterior)
+            console.log('   🚀 Iniciando polling...');
+            pollRecognitions();
+            
+            document.getElementById('statusText').textContent = 'Reconocimiento activo';
         })
         .catch(err => {
             console.error('❌ [START] Error al iniciar reconocimiento:', err);
@@ -569,11 +602,14 @@ function startRecognition() {
 // Detener reconocimiento
 function stopRecognition() {
     console.log('🔴 [STOP] Botón de detener presionado');
+    
+    // 🔴 CRÍTICO: Detener el polling PRIMERO
+    stopPolling();
+    
     fetch('/api/api/stoprecognition', { method: 'POST' })
         .then(response => response.json())
         .then(data => {
             console.log('✅ [STOP] Reconocimiento detenido:', data);
-            isPolling = false;
             
             // ✅ Limpiar estado de localStorage
             localStorage.removeItem('recognitionActive');
@@ -615,6 +651,14 @@ function toggleFullscreen() {
         document.exitFullscreen();
     }
 }
+
+// 🔄 Limpiar polling al cambiar de página
+window.addEventListener('beforeunload', function(e) {
+    // Solo detener el polling local, NO reiniciar el reconocimiento
+    // El reconocimiento en el servidor sigue corriendo
+    stopPolling();
+    console.log('🔄 Limpiando polling al cambiar de página');
+});
 
 // ✅ Al cargar la página, verificar si el reconocimiento estaba activo
 console.log('🌟 [INIT] Página cargada');
