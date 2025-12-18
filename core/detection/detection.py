@@ -86,13 +86,13 @@ def namesToDictionary(path):
 
         # Verificar si es una carpeta
         if os.path.isdir(full_path):
-            print("carpeta:" + item)
+            #print("carpeta:" + item)
 
             name = item  # El nombre de la carpeta ES el dni de la persona
-            print("name:" + name)
+            #print("name:" + name)
 
             names_labels[name] = contador
-            print(f"label:{contador}")
+            #print(f"label:{contador}")
 
             contador += 1
 
