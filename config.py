@@ -39,8 +39,7 @@ camIndex = 0
 # Ajustar paths según plataforma
 PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
 MODEL_PATH = "/home/pi/Facial_Recognition_Raspberry/trained_model.xml"
-# config.py
-import os
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
