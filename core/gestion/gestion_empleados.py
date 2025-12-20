@@ -1,6 +1,5 @@
 import threading
 from core.bd.bd_functions import obtener_empleados_lista
-from core.bd.bd_functions import get_empleado_name
 
 # Variables globales para notificar cambios
 empleados_version = 0

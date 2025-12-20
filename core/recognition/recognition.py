@@ -1,8 +1,6 @@
 import cv2
-import os
-import numpy as np
+
 import core.queues.colas as queue
-import core.detection.detection as detection 
 from core.control import stop_event
 import time
 from core.gestion.gestion_empleados import notificar_empleado_actualizado
@@ -10,7 +8,7 @@ from core.bd.bd_functions import registrar_entrada_empleado, registrar_salida_em
 from config import led
 
 frames = queue.detected
-THRESHOLD = 85  # Ajusta según los resultados que veas
+THRESHOLD = 85  
 
 # Guardamos cuando se ha reconocido a cada persona para evitar reconocimientos duplicados
 ultimo_timestamp = {}          
@@ -129,13 +127,3 @@ def recognition_run(recognizer, names_labels):
 
 
             
-
-
-
-
-
-
-# RECOGNIZE faces: 
-    #1. detectar cara con detection.py del frame que llega 
-    #2. pasarlo a grayScale 
-    #3. detectar usando el modelo entrenado .xml

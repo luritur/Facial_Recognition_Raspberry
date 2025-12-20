@@ -1,14 +1,7 @@
 import os
 from web import create_app
 from config import Config
-
-# Rutas de configuración
-PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
-
-
-# ============================================================
-# INICIAR APLICACIÓN
-# ============================================================
+from config import PATH_REGISTER
 
 app = create_app()
 
@@ -22,7 +15,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     # Crear carpetas necesarias si no existen
-    os.makedirs(    , exist_ok=True)
+    os.makedirs(PATH_REGISTER, exist_ok=True)
     # Cargar configuración desde config.py
     app.config.from_object(Config)
 

@@ -9,9 +9,6 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 frames = queue.frames
 
-#OJOJO VER REALMENTE CUALES SON LAS DIMENSIONES
-IMAGE_WIDTH = 720
-IMAGE_HEIGHT = 360
 
 
 def detection_run():

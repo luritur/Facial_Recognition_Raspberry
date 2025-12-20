@@ -1,5 +1,4 @@
 from flask import current_app
-from flask_sqlalchemy import SQLAlchemy
 from core.bd.bd_create import Empleado
 from core.bd.db import db
 from config import PATH_REGISTER, MODEL_PATH

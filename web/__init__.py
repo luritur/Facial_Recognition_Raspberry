@@ -5,7 +5,7 @@ from core.bd.db import db
 from .routes.main_routes import main_bp
 from .routes.video_routes import video_bp
 from .routes.api_routes import api_bp
-from config import Config  # tu archivo de configuración
+from config import Config 
 
 
 

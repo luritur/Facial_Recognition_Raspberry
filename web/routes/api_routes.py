@@ -2,8 +2,6 @@
 
 from flask import Blueprint, jsonify, request
 import time
-import threading
-from core.control import stop_event
 
 # Importar módulos de tu código existente
 from core.main import ejecutar_run
@@ -14,8 +12,7 @@ from core.main import run_entrenar_modelo_thread
 import core.gestion.gestion_empleados as gestion_empleados
 from core.bd.bd_functions import obtener_empleados_lista
 from core.bd.bd_functions import obtener_minutos_totales_actuales
-import core.main as main
-import core.control as control
+from config import PATH_REGISTER
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
@@ -24,17 +21,11 @@ reconocimiento_activo=False
 
 
 
-# Rutas de configuración
-#PATH_REGISTER = "/home/pi/Facial_Recognition_Raspberry/imagenes/registro/"
-PATH_REGISTER = "C:/3Año/arquitectura/Facial_Recognition_Raspberry/imagenes/registro"
-
-
 # Crear el blueprint para el API
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
 
 #Api endpoints
-
 @api_bp.route('/api/initrecognition', methods=['POST'])
 def detectar_start():
     global reconocimiento_activo
@@ -42,7 +33,6 @@ def detectar_start():
     print(f"\n{'='*60}")
     print(f"[API INIT] 🎬 Solicitud de inicio de reconocimiento")
     
-    # ✅ CRÍTICO: Obtener el ID actual del servidor
     with gestion_empleados.empleados_lock:
         id_actual = gestion_empleados.empleados_version
     
@@ -59,8 +49,8 @@ def detectar_start():
         return jsonify({
             "status": "ok",
             "message": "Reconocimiento iniciado",
-            "current_id": id_actual,  # ✅ Enviar el ID correcto del servidor
-            "reset": True  # ✅ Indicar al cliente que debe resetear su ID
+            "current_id": id_actual,  
+            "reset": True  
         })
     else:
         reconocimiento_activo = False
@@ -126,7 +116,7 @@ def api_registrar():
         # Datos del formulario
         nombre = data.get('nombre', '').strip()
         dni = data.get('dni', '').strip()
-        email = data.get('email', '').strip()      # Nuevo campo
+        email = data.get('email', '').strip()      
         jornada_val = data.get('jornada', '')
         if isinstance(jornada_val, int):
             jornada = jornada_val
@@ -217,7 +207,6 @@ def obtener_progreso_entrenamiento():
     })
 
 
-############################################################
 
 @api_bp.route('/empleados', methods=['GET'])
 def obtener_empleados():
@@ -262,59 +251,6 @@ def obtener_empleados():
         'empleados': empleados_dict,
         'version': gestion_empleados.empleados_version
     })
-
-# @api_bp.route('/empleados/esperar-cambios', methods=['GET'])
-# def esperar_cambios():
-#     """Long polling: espera hasta que haya cambios"""
-#     version_actual = int(request.args.get('version', 0))
-#     timeout = 30
-#     inicio = time.time()
-    
-#     print(f"[LONG POLLING] 🔍 Cliente esperando cambios. Versión actual: {version_actual}")
-#     print(f"[LONG POLLING] 📊 Versión del servidor: {gestion_empleados.empleados_version}")
-    
-#     while (time.time() - inicio) < timeout:
-#         with gestion_empleados.empleados_lock:
-#             if gestion_empleados.empleados_version > version_actual:
-#                 print(f"[LONG POLLING] 🎉 ¡Cambio detectado! {gestion_empleados.empleados_version} > {version_actual}")
-#                 print(f"[LONG POLLING] 📦 Enviando: {gestion_empleados.ultimo_cambio}")
-
-#                 tipo_cambio = gestion_empleados.ultimo_cambio['tipo']
-#                 empleado_data = gestion_empleados.ultimo_cambio['empleado']
-                
-#                 # Si es actualización de estado, obtener datos completos de la BD
-#                 if tipo_cambio == 'actualizado':
-#                     dni = empleado_data['dni']
-#                     empleados = obtener_empleados_lista()
-                    
-#                     for emp in empleados:
-#                         if emp.dni == dni:
-#                             empleado_data = {
-#                                 'dni': emp.dni,
-#                                 'nombre': emp.nombre,
-#                                 'email': emp.email,
-#                                 'jornada': emp.jornada,
-#                                 'horas': emp.horas,
-#                                 'estado': emp.estado  # Estado actualizado de la BD
-#                             }
-#                             break
-                
-#                 return jsonify({
-#                     'success': True,
-#                     'cambio': True,
-#                     'version': gestion_empleados.empleados_version,
-#                     'tipo': tipo_cambio,
-#                     'empleado': empleado_data
-#                 })
-        
-#         time.sleep(0.5)
-    
-#     print(f"[LONG POLLING] ⏰ Timeout. No hubo cambios.")
-#     return jsonify({
-#         'success': True,
-#         'cambio': False,
-#         'version': version_actual
-#     })
 
 @api_bp.route('/empleados/esperar-cambios', methods=['GET'])
 def esperar_cambios():
@@ -452,7 +388,7 @@ def recognition_event():
     print(f"   - Diferencia: {gestion_empleados.empleados_version - last_client_id}")
     print(f"{'='*60}\n")
 
-    # ✅ IMPORTANTE: Verificar PRIMERO si ya hay datos disponibles
+    # Verificar PRIMERO si ya hay datos disponibles
     with gestion_empleados.empleados_lock:
         if gestion_empleados.empleados_version > last_client_id:
             print(f"[RECOGNITION POLLING] 🎉 ¡Reconocimiento disponible INMEDIATAMENTE!")
@@ -498,21 +434,13 @@ def recognition_event():
 
         time.sleep(0.5)
 
-    # ✅ IMPORTANTE: Devolver respuesta de timeout
+    # Devolver respuesta de timeout
     print(f"[RECOGNITION POLLING] ⏰ Timeout sin cambios (esperó {timeout}s)")
     print(f"   - ID sigue en: {gestion_empleados.empleados_version}\n")
 
     return jsonify({
         'success': True,
         'nuevo': False,
-        'id': last_client_id  # ✅ Devolver el mismo ID que el cliente envió
+        'id': last_client_id  # Devolver el mismo ID que el cliente envió
     })
 
-    # No hubo cambios → mantener conexión viva
-    print(f"[RECOGNITION POLLING] ⏰ Timeout sin cambios")
-
-    return jsonify({
-        'success': True,
-        'nuevo': False,
-        'id': last_client_id
-    })

@@ -1,12 +1,9 @@
 import cv2
 import threading
 import time
-import pandas as pd
 import os
-import sys
 import platform
 
-import core.show as show
 import core.detection.detection as detection
 import core.recognition.recognition as recognition
 import core.camera.camera as camera
@@ -19,9 +16,11 @@ import core.control as control
 import core.control as control
 
 import config
-from core.gestion.gestion_empleados import notificar_empleado_actualizado, notificar_nuevo_empleado
+from core.gestion.gestion_empleados import notificar_nuevo_empleado
+from core.bd.bd_functions import agregar_empleado, empleado_exist
 
-from core.bd.bd_functions import actualizar_empleado, agregar_empleado, obtener_empleados_lista, empleado_exist
+from config import BTN_DETENER, led, camIndex, PATH_REGISTER, MODEL_PATH
+
 # ========================================
 # DETECCIÓN DE PLATAFORMA
 # ========================================
@@ -58,12 +57,6 @@ else:
                 self.when_pressed()
 
 
-# ========================================
-# IMPORTAR CONFIGURACIÓN GLOBAL
-# ========================================
-from config import LED_PIN, BTN_DETENER, led, camIndex, PATH_REGISTER, MODEL_PATH
-
-
 
 
 
@@ -89,9 +82,7 @@ if camIndex is None:
 
 
 def run_camera_thread(duracion, path=None, queue_frames = None, camera_index=None, dni=None):
-    """
-    Lanza el hilo de la cámara. Si no se pasa `camera_index`, usa el `camIndex` detectado.
-    """
+
     idx = camera_index if camera_index is not None else camIndex
     t_camera = threading.Thread(target=camera.camara_run, args=(queue_frames, duracion, path, idx, dni))
     t_camera.start()
@@ -253,7 +244,6 @@ def ejecutar_run():
     print("="*50 + "\n")
     
     run_camera_thread(1, queue_frames=frames)
-    #def run_camera_thread(duracion, path=None, quee_frames = None, camera_index=None, dni=None):
 
     run_detect_thread()
     run_recognition_thread(config.recognizer, config.names_labels)
@@ -282,15 +272,10 @@ def detener_run():
     run_detect_thread.started = False
     run_recognition_thread.started = False
     print("✅ Reconocimiento detenido de forma segura")
-# ========================================
-# ASIGNAR CALLBACKS
-# ========================================
 
 BTN_DETENER.when_pressed = detener_run
 
-# ========================================
 # LOOP PRINCIPAL
-# ========================================
 try:
     if IS_RASPBERRY:
         print("\n✅ Sistema iniciado - Esperando botones físicos...")

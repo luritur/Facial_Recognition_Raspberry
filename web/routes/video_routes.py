@@ -8,7 +8,6 @@ from core.queues.colas import show_queue
 video_bp = Blueprint("video",__name__)
 
 def crear_frame_placeholder(texto="Cámara no activa", subtexto=None):
-    """Crea un frame negro con texto para cuando no hay video"""
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
     frame[:] = (40, 40, 45)  # Gris oscuro azulado
     
@@ -32,10 +31,7 @@ def crear_frame_placeholder(texto="Cámara no activa", subtexto=None):
     return frame
 
 def gen_frames():
-    """
-    Generador de frames para el stream MJPEG
-    Con timeout para evitar bloqueo infinito cuando la cola está vacía
-    """
+
     # Frame por defecto cuando no hay cámara activa
     frame_placeholder = crear_frame_placeholder(
         "Camara no activa", 
@@ -45,7 +41,7 @@ def gen_frames():
     
     sin_frames_contador = 0
     
-    try:  # ← NUEVO: try exterior para capturar GeneratorExit
+    try:  # try exterior para capturar GeneratorExit
         while True:
             try:
                 # Intentar obtener frame con timeout de 0.5 segundos
@@ -83,54 +79,19 @@ def gen_frames():
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                        
-            #except GeneratorExit:  # ← NUEVO: Captura específica para desconexión
-                #print("[VIDEO_FEED] 🔌 Cliente desconectado")
-                #break  # ← NUEVO: Salir del bucle elegantemente
+
                        
             except Exception as e:
                 print(f"[VIDEO_FEED] ❌ Error en yield: {e}")
                 continue
                 
-    except GeneratorExit:  # ← NUEVO: Captura exterior por si acaso
+    except GeneratorExit:  # Captura exterior por si acaso
         print("[VIDEO_FEED] 🛑 Stream cerrado")
-    finally:  # ← NUEVO: Limpieza garantizada
+    finally:  # Limpieza garantizada
         print("[VIDEO_FEED] 🧹 Recursos liberados")
 
 @video_bp.route('/video_feed')
 def video_feed():
-    """Endpoint que devuelve el stream de video"""
     return Response(gen_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @video_bp.route('/register_video_feed')
-# def register_video_feed():
-#     """
-#     Stream de video en tiempo real
-#     TODO: Implementar con un gestor de cámara que corra continuamente
-#     """
-#     def generate():
-#         # Placeholder - esto deberías implementarlo con un CameraManager
-#         # que tenga la cámara siempre abierta
-        
-#         cap = cv2.VideoCapture(0)
-        
-#         try:
-#             while True:
-#                 ret, frame = cap.read()
-#                 if not ret:
-#                     break
-                
-#                 # Codificar frame a JPEG
-#                 ret, buffer = cv2.imencode('.jpg', frame)
-#                 if not ret:
-#                     continue
-                
-#                 frame_bytes = buffer.tobytes()
-                
-#                 yield (b'--frame\r\n'
-#                        b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-#         finally:
-#             cap.release()
-    
-#     return Response(generate(), 
-#                     mimetype='multipart/x-mixed-replace; boundary=frame')

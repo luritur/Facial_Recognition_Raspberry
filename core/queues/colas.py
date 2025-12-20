@@ -1,5 +1,4 @@
 import queue
-import threading
 
 # Cola de eventos (OJO EL MAXSIZE)
 frames = queue.Queue(maxsize=100)

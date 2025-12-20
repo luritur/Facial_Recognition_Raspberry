@@ -1,6 +1,3 @@
-# ========================================
-# CONFIGURAR PATH Y HARDWARE
-# ========================================
 import sys, os
 import platform
 import cv2

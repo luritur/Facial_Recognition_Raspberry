@@ -1,10 +1,3 @@
-    #1.recorrer la carpeta de caras registradas: 
-    #   - En una lista guardar el "label" == el nombre del fichero (el dni del usuario)
-    #       -->OJOJO para los labels hay que hacer un diccionario "dni":numero
-    #   - En otra lista detectar la cara con detection.py + pasarla a gray + guardarla en una lista de imagenes
-
-    #2. entrenar con caras y labels
-    #3. guardar el modelo entrenado como un fichero .xml
 import cv2
 import numpy as np
 import core.detection.detection as detection

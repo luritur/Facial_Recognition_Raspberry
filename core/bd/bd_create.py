@@ -1,5 +1,4 @@
 from core.bd.db import db
-from datetime import datetime
 
 class Empleado(db.Model):
     __tablename__ = "empleados"
@@ -20,18 +19,15 @@ class Empleado(db.Model):
         return f"<Empleado {self.nombre} ({self.email})>"
     
     def get_progreso_porcentaje(self):
-        """Calcula el porcentaje de progreso basado en minutos trabajados"""
         minutos_jornada = self.jornada * 60
         porcentaje = min((self.minutos_trabajados / minutos_jornada) * 100, 100)
         return round(porcentaje, 1)
     
     def get_horas_formateadas(self):
-        """Convierte minutos trabajados a formato HH:MM"""
         horas = self.minutos_trabajados // 60
         minutos = self.minutos_trabajados % 60
         return f"{horas}h {minutos}m"
     
     def ha_completado_jornada(self):
-        """Verifica si el empleado ha completado su jornada"""
         minutos_jornada = self.jornada * 60
         return self.minutos_trabajados >= minutos_jornada
