@@ -580,7 +580,7 @@
     <div class="modal-content-custom">
         <div class="modal-header-custom">
             <h3>➕ Registrar Nuevo Empleado</h3>
-            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <button class="close-btn" id="Xclose" onclick="closeModal()">&times;</button>
         </div>
         
         <div class="progress-container">
@@ -670,7 +670,7 @@
                 ← Atrás
             </button>
             <div style="flex: 1;"></div>
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">
+            <button type="button" class="btn btn-secondary" id="btnCancelar" onclick="closeModal()">
                 Cancelar
             </button>
             <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()">
@@ -863,6 +863,8 @@ function showStep(step) {
     const btnBack = document.getElementById('btnBack');
     const btnNext = document.getElementById('btnNext');
     const btnCapture = document.getElementById('btnCapture');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnXClose = document.getElementById('Xclose');
     
     if (step === 1) {
         btnBack.style.display = 'none';
@@ -878,6 +880,8 @@ function showStep(step) {
         btnBack.style.display = 'block';
         btnNext.style.display = 'none';
         btnCapture.style.display = 'block';
+        btnCancelar.style.display = 'none';
+        btnXClose.style.display = 'none';
     }
     
     currentStep = step;
@@ -1158,12 +1162,7 @@ function stopCapture() {
         .catch(e => console.error('Error deteniendo captura:', e));
 }
 
-// Cerrar modal al hacer click fuera
-document.getElementById('addEmployeeModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
-});
+
 
 // Cerrar con tecla ESC
 document.addEventListener('keydown', function(e) {
