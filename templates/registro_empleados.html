@@ -543,6 +543,8 @@
                 </div>
             </div>
         <script>
+        // Variable para guardar si el reconocimiento estaba activo antes del registro
+        window.recognitionWasActive = false;
         function deleteEmployee(dni) {
             if (!confirm('¿Seguro que quieres eliminar este empleado?')) return;
             
@@ -554,13 +556,110 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok') {
-                    location.reload();
+                    // 1. Primero preguntamos si el reconocimiento está activo en el servidor
+                    fetch('/api/api/recognition_status')
+                        .then(res => res.json())
+                        .then(statusData => {
+                            
+                            // 2. SOLO si está activo, comprobamos el XML
+                            if (statusData.active) {
+                                console.log("Reconocimiento activo, verificando integridad del modelo...");
+                                
+                                fetch('/api/api/xml')
+                                    .then(res => res.json())
+                                    .then(xmlData => {
+                                        if (!xmlData.exists) {
+                                            // Si no hay modelo, detenemos y avisamos
+                                            stopRecognition();
+                                            mostrarModalSinModelo();
+                                        } else {
+                                            // Si hay modelo, recargamos normal
+                                            location.reload();
+                                        }
+                                    });
+                            } else {
+                                // 3. Si NO está activo, recargamos directamente
+                                console.log("Reconocimiento inactivo, recargando página...");
+                                location.reload();
+                            }
+                        })
+                        .catch(() => location.reload()); // Si falla la consulta de estado, recargamos por seguridad
                 } else {
                     alert('❌ Error al eliminar: ' + data.message);
                 }
             })
             .catch(err => alert('❌ Error al eliminar: ' + err));
         }
+        function mostrarModalSinModelo() {
+        // Crear modal si no existe
+        if (!document.getElementById('modalSinModelo')) {
+            const modalHTML = `
+                <div id="modalSinModelo" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        min-width: 420px;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                        text-align: center;
+                    ">
+                        <h3 style="
+                            margin: 0 0 15px 0;
+                            color: #e67e22;
+                        ">⚠️ Atención</h3>
+
+                        <p style="
+                            color: #2c3e50;
+                            font-size: 1rem;
+                            line-height: 1.5;
+                            margin-bottom: 25px;
+                        ">
+                            Has borrado todos los empleados.<br>
+                            El reconocimiento no se volverá a iniciar ya que no hay modelo de reconocimiento.
+                        </p>
+
+                        <button onclick="cerrarModalSinModelo()" style="
+                            background: #e67e22;
+                            color: white;
+                            border: none;
+                            padding: 10px 25px;
+                            border-radius: 8px;
+                            font-size: 0.95rem;
+                            cursor: pointer;
+                            transition: background 0.2s ease;
+                        "
+                        onmouseover="this.style.background='#d35400'"
+                        onmouseout="this.style.background='#e67e22'">
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        document.getElementById('modalSinModelo').style.display = 'flex';
+        }
+        function cerrarModalSinModelo() {
+            const modal = document.getElementById('modalSinModelo');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            location.reload();
+        }
+
+
         </script>
         </div>
         {% endfor %}
@@ -885,12 +984,11 @@ function showStep(step) {
     }
     
     currentStep = step;
-}// Variable para guardar si el reconocimiento estaba activo antes del registro
-let recognitionWasActive = false;
+}
 
 // 🔄 Reiniciar reconocimiento al cerrar la ventana/pestaña
 window.addEventListener('beforeunload', function(e) {
-    if (recognitionWasActive) {
+    if (window.recognitionWasActive) {
         console.log('🔄 Ventana cerrándose. Reiniciando reconocimiento...');
         
         // Usar sendBeacon para enviar la petición de forma fiable al cerrar
@@ -909,7 +1007,7 @@ function stopRecognition() {
             isPolling = false;
             
             // ✅ Limpiar estado de memoria
-            recognitionWasActive = false;
+            window.recognitionWasActive = false;
             
             document.getElementById('statusText').textContent = 'Reconocimiento detenido';
         })
@@ -997,7 +1095,7 @@ function nextStep() {
             .then(data => {
                 if (data.active) {
                     console.log('⚠️ Reconocimiento activo detectado. Deteniéndolo...');
-                    recognitionWasActive = true;
+                    window.recognitionWasActive = true;
                     
                     // Detener el reconocimiento
                     return fetch('/api/api/stoprecognition', { method: 'POST' })
@@ -1008,7 +1106,7 @@ function nextStep() {
                         });
                 } else {
                     console.log('✅ Reconocimiento no activo. Continuando...');
-                    recognitionWasActive = false;
+                    window.recognitionWasActive = false;
                     proceedToCapture();
                 }
             })

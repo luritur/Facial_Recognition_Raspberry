@@ -562,42 +562,55 @@ function addRecognitionMessage(nombre, confidence) {
 // Iniciar reconocimiento
 function startRecognition() {
     console.log('🔵 [START] Botón de inicio presionado');
+
     fetch('/api/api/initrecognition', { method: 'POST' })
-        .then(response => {
-            console.log('📬 [START] Respuesta recibida, status:', response.status);
-            if (!response.ok) {
-                return response.json().then(data => { throw data; });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('✅ [START] Reconocimiento iniciado:', data);
+
+            console.log('📬 [START] Respuesta recibida:', data);
+
+            // ❌ NO se pudo iniciar (no hay modelo)
+            if (!data.started) {
+                console.warn('⚠️ [START] Reconocimiento NO iniciado:', data.reason);
+
+                // Asegurar estado coherente
+                localStorage.setItem('recognitionActive', 'false');
+                document.getElementById('statusText').textContent = 'Reconocimiento detenido';
+
+                // Mostrar notificación/modal
+                mostrarModalSinModelo();
+                return;
+            }
+
+            // ✅ Reconocimiento iniciado correctamente
+            console.log('✅ [START] Reconocimiento iniciado');
             console.log(`   - current_id del servidor: ${data.current_id}`);
             console.log(`   - lastRecognitionId local ANTES: ${lastRecognitionId}`);
-            
-            // ✅ Guardar estado de reconocimiento activo en localStorage
+
             localStorage.setItem('recognitionActive', 'true');
-            
+
             // Sincronizar con el servidor
             if (data.current_id !== undefined) {
                 console.log(`   🔄 SINCRONIZANDO con servidor: ${lastRecognitionId} -> ${data.current_id}`);
                 lastRecognitionId = data.current_id;
                 localStorage.setItem('lastRecognitionId', lastRecognitionId);
             }
-            
+
             console.log(`   - lastRecognitionId local DESPUÉS: ${lastRecognitionId}`);
-            
-            // 🔴 CRÍTICO: Siempre iniciar polling (stopPolling se encarga de detener el anterior)
+
+            // 🔴 CRÍTICO: iniciar polling
             console.log('   🚀 Iniciando polling...');
             pollRecognitions();
-            
+
             document.getElementById('statusText').textContent = 'Reconocimiento activo';
         })
         .catch(err => {
-            console.error('❌ [START] Error al iniciar reconocimiento:', err);
-            alert('❌ ERROR: ' + (err.message || 'No se pudo iniciar el reconocimiento.\n\nVerifica que:\n1. Hay empleados registrados\n2. El modelo está entrenado (botón 🤖)'));
+            // Solo errores REALES (red, excepción, etc.)
+            console.error('💥 [START] Error inesperado:', err);
+            alert('❌ Error al iniciar reconocimiento, no hay modelo entrenado');
         });
 }
+
 
 // Detener reconocimiento
 function stopRecognition() {

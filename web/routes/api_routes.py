@@ -13,6 +13,15 @@ import core.gestion.gestion_empleados as gestion_empleados
 from core.bd.bd_functions import obtener_empleados_lista
 from core.bd.bd_functions import obtener_minutos_totales_actuales
 from config import PATH_REGISTER
+from config import MODEL_PATH
+import os
+from core.bd.bd_functions import borrar_empleado
+from core.bd.bd_functions import Empleado
+from flask import current_app
+import core.control as control
+from core.bd.bd_functions import obtener_minutos_totales_actuales
+
+
 # Variables globales para gestión de estado
 registro_activo = False
 registro_thread = None
@@ -48,18 +57,21 @@ def detectar_start():
         print(f"{'='*60}\n")
         return jsonify({
             "status": "ok",
+            "started": True,
             "message": "Reconocimiento iniciado",
-            "current_id": id_actual,  
-            "reset": True  
-        })
+            "current_id": id_actual,
+            "reset": True
+        }), 200
     else:
         reconocimiento_activo = False
         print(f"   ❌ No se pudo iniciar reconocimiento")
         print(f"{'='*60}\n")
         return jsonify({
-            "status": "error",
-            "message": "No se pudo iniciar el reconocimiento. Verifica que el modelo esté entrenado."
-        }), 400
+            "status": "ok",
+            "started": False,
+            "reason": "NO_MODEL",
+            "message": "No hay modelo entrenado. El reconocimiento no puede iniciarse."
+        }), 200
 
 @api_bp.route('/api/stoprecognition', methods=['POST'])
 def detectar_stop():
@@ -92,8 +104,7 @@ def api_check_user_exists():
     data = request.get_json()
     email = data.get('email', '').strip()
     dni = data.get('dni', '').strip()
-    from core.bd.bd_functions import Empleado
-    from flask import current_app
+
     with current_app.app_context():
         existe_email = Empleado.query.filter_by(email=email).first() is not None
         existe_dni = Empleado.query.filter_by(dni=dni).first() is not None
@@ -199,7 +210,6 @@ def api_entrenarModelo():
 @api_bp.route('/api/entrenamiento/progreso', methods=['GET'])
 def obtener_progreso_entrenamiento():
     """Devuelve el progreso actual del entrenamiento"""
-    import core.control as control
     return jsonify({
         'entrenando': control.entrenando_modelo,
         'progreso': control.entrenamiento_progreso,
@@ -211,7 +221,6 @@ def obtener_progreso_entrenamiento():
 @api_bp.route('/empleados', methods=['GET'])
 def obtener_empleados():
     """Devuelve empleados actuales con información completa de tiempo calculada en tiempo real"""
-    from core.bd.bd_functions import obtener_minutos_totales_actuales
     empleados = obtener_empleados_lista()
     
     # Convertir objetos Empleado a diccionarios
@@ -338,7 +347,6 @@ def api_delete_employee():
     """
     data = request.get_json()
     dni = data.get('dni', '').strip()
-    from core.bd.bd_functions import borrar_empleado
     try:
         # Verificar si es el último empleado ANTES de borrarlo
         empleados_antes = obtener_empleados_lista()
@@ -444,3 +452,15 @@ def recognition_event():
         'id': last_client_id  # Devolver el mismo ID que el cliente envió
     })
 
+
+@api_bp.route('/api/xml', methods=['GET'])
+def existe_xml():
+    """
+    Devuelve si el modelo XML existe o no
+    """
+    exists = os.path.exists(MODEL_PATH)
+
+    return jsonify({
+        'status': 'ok',
+        'exists': exists
+    }), 200
