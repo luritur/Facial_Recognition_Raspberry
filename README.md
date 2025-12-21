@@ -37,6 +37,7 @@ Incluye una barra de progreso que indica las horas trabajadas, actualizada en ti
 ### Registro de empleados
 
 Permite visualizar los empleados registrados, añadir nuevos usuarios y entrenar el modelo de reconocimiento facial con todos los empleados de forma conjunta.
+Para entrenar el modelo hacer click en el botón del robot arriba a la derecha.
 
 ### Cámara en directo
 
